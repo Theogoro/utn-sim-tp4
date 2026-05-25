@@ -11,6 +11,13 @@ class StudentArrivalHandler(SimulationHandler):
         
         # 1. Registrar intento de llegada
         state.stats.total_students_arrived += 1
+        state.stats.total_new_students_arrived += 1
+
+        # El flujo externo de alumnos continúa aunque este alumno se vaya y vuelva más tarde.
+        rnd_arr, arrival_interval = exponential(params.mean_arrival_time)
+        state.student_rnd = rnd_arr
+        state.student_arrival_time = arrival_interval
+        state.student_next_arrival_time = state.next_student_arrival = state.current_time + arrival_interval
         
         # 2. Controlar la capacidad de la cola (más de 5 esperando -> se va)
         if len(state.queue) > params.student_wait_threshold:
@@ -39,12 +46,6 @@ class StudentArrivalHandler(SimulationHandler):
             else:
                 # Entrar a la cola
                 state.queue.append(state.current_time)
-        
-        # 3. Planificar el próximo arribo exponencial
-        rnd_arr, arrival_interval = exponential(params.mean_arrival_time)
-        state.student_rnd = rnd_arr
-        state.student_arrival_time = arrival_interval
-        state.student_next_arrival_time = state.next_student_arrival = state.current_time + arrival_interval
 
 
 class RegistrationCompleteHandler(SimulationHandler):

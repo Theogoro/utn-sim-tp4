@@ -40,8 +40,8 @@ def main():
     
     # Métrica A: % de alumnos que se van para regresar más tarde
     pct_students_returned = 0.0
-    if stats.total_students_arrived > 0:
-        pct_students_returned = (stats.total_students_returned / stats.total_students_arrived) * 100
+    if stats.total_new_students_arrived > 0:
+        pct_students_returned = (stats.total_students_returned / stats.total_new_students_arrived) * 100
         
     # Métrica B: Tiempo promedio de espera (solo alumnos que hicieron cola y esperaron)
     avg_waiting_time = 0.0
@@ -58,7 +58,8 @@ def main():
     print("|             RESULTADOS GENERALES DE SIMULACIÓN           |")
     print("+----------------------------------------------------------+")
     print(f"|  Dias Simulados:            {sim_days:<28} |")
-    print(f"|  Total Alumnos Arribados:   {stats.total_students_arrived:<28} |")
+    print(f"|  Alumnos Nuevos Arribados:  {stats.total_new_students_arrived:<28} |")
+    print(f"|  Intentos de Arribo:        {stats.total_students_arrived:<28} |")
     print(f"|  Inscripciones Completadas: {stats.registrations_completed:<28} |")
     print(f"|  Visitas del Tecnico:       {stats.total_technician_visits:<28} |")
     print("+----------------------------------------------------------+")

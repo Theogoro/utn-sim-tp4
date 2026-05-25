@@ -26,7 +26,8 @@ class ServerState:
 class SimulationStats:
     def __init__(self):
         # Estadísticas de Alumnos
-        self.total_students_arrived = 0      # Total de arribos (incluyendo retornos)
+        self.total_students_arrived = 0      # Total de intentos de arribo (incluyendo retornos)
+        self.total_new_students_arrived = 0  # Total de alumnos nuevos del flujo exponencial
         self.total_students_returned = 0     # Alumnos que se retiraron porque la cola superaba las 5 personas
         self.students_queued_and_waited = 0  # Alumnos que entraron en cola y esperaron un tiempo > 0
         self.total_waiting_time = 0.0        # Sumatoria del tiempo de espera de alumnos que hicieron cola
@@ -40,6 +41,7 @@ class SimulationStats:
 
     def __repr__(self):
         return (f"Stats(arrived={self.total_students_arrived}, "
+                f"new_arrived={self.total_new_students_arrived}, "
                 f"returned={self.total_students_returned}, "
                 f"waited={self.students_queued_and_waited}, "
                 f"total_wait={self.total_waiting_time:.1f}, "
@@ -111,25 +113,25 @@ class SimulationState:
         candidates = []
         
         if self.next_student_arrival is not None:
-            candidates.append((self.next_student_arrival, 'student_arrival', None))
+            candidates.append((self.next_student_arrival, 3, 'student_arrival', None))
             
         if self.next_technician_arrival is not None:
-            candidates.append((self.next_technician_arrival, 'technician_arrival', None))
+            candidates.append((self.next_technician_arrival, 1, 'technician_arrival', None))
             
         if self.next_maintenance_complete is not None:
-            candidates.append((self.next_maintenance_complete, 'maintenance_complete', None))
+            candidates.append((self.next_maintenance_complete, 0, 'maintenance_complete', None))
             
         for i, t in enumerate(self.next_registration_complete):
             if t is not None:
-                candidates.append((t, 'registration_complete', i))
+                candidates.append((t, 0, 'registration_complete', i))
                 
         if self.student_returns:
-            candidates.append((self.student_returns[0], 'student_return', None))
+            candidates.append((self.student_returns[0], 3, 'student_return', None))
             
         if not candidates:
             return None, None, None
             
-        next_time, event_type, pc_index = min(candidates, key=lambda x: x[0])
+        next_time, _, event_type, pc_index = min(candidates, key=lambda x: (x[0], x[1]))
         return next_time, event_type, pc_index
 
     def __repr__(self):
