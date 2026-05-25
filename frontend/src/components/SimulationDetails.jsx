@@ -201,27 +201,31 @@ const SimulationDetails = ({ simulationId }) => {
   };
 
   const columns = [
+    // --- CATEGORY 1: GENERAL/CLOCK ---
     {
       title: <span style={{ fontSize: '11px', color: '#64748b' }}>Fila</span>,
       dataIndex: 'line_index',
       key: 'line_index',
       width: 75,
       fixed: 'left',
+      onHeaderCell: () => ({ className: 'header-col-general' }),
       render: (idx) => <Text style={{ color: '#475569', fontFamily: 'monospace', fontSize: '11px' }}>{idx}</Text>
     },
     {
-      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}><ClockCircleOutlined /> Reloj</span>,
+      title: <span style={{ fontSize: '11px', color: '#cbd5e1' }}><ClockCircleOutlined /> Reloj</span>,
       dataIndex: 'clock_formatted',
       key: 'clock_formatted',
       width: 100,
       fixed: 'left',
+      onHeaderCell: () => ({ className: 'header-col-general' }),
       render: (t) => <strong style={{ color: '#c084fc', fontFamily: 'monospace', fontSize: '11px', textShadow: '0 0 6px rgba(192, 132, 252, 0.15)' }}>{t}</strong>
     },
     {
-      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}><SettingOutlined /> Evento</span>,
+      title: <span style={{ fontSize: '11px', color: '#cbd5e1' }}><SettingOutlined /> Evento</span>,
       dataIndex: 'event_name',
       key: 'event_name',
       width: 210,
+      onHeaderCell: () => ({ className: 'header-col-general' }),
       render: (evt) => {
         let label = evt;
         let color = '#a855f7'; // default purple
@@ -288,10 +292,11 @@ const SimulationDetails = ({ simulationId }) => {
       }
     },
     {
-      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}><TeamOutlined /> Cola</span>,
+      title: <span style={{ fontSize: '11px', color: '#cbd5e1' }}><TeamOutlined /> Cola</span>,
       dataIndex: 'queue_length',
       key: 'queue_length',
       width: 75,
+      onHeaderCell: () => ({ className: 'header-col-general' }),
       render: (len) => {
         const limit = simulation?.student_wait_threshold || 5;
         let color = '#94a3b8'; // gray
@@ -335,89 +340,119 @@ const SimulationDetails = ({ simulationId }) => {
         );
       }
     },
+
+    // --- CATEGORY 2: ALUMNOS (STUDENTS) ---
     {
-      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}><LaptopOutlined /> Servidores (LED)</span>,
-      dataIndex: 'pc_states',
-      key: 'pc_states',
-      width: 175,
-      render: (states) => renderPcStates(states)
-    },
-    {
-      title: <span style={{ fontSize: '11px', color: '#64748b' }}><ExperimentOutlined /> RND Lleg.</span>,
+      title: <span style={{ fontSize: '11px', color: '#c7d2fe' }}><ExperimentOutlined /> RND Lleg.</span>,
       dataIndex: 'student_rnd',
       key: 'student_rnd',
       width: 110,
+      onHeaderCell: () => ({ className: 'header-col-students' }),
+      onCell: () => ({ className: 'cell-col-students' }),
       render: (val) => renderMutedMonospace(val, true, 4)
     },
     {
-      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}>Tpo Llegada (min)</span>,
+      title: <span style={{ fontSize: '11px', color: '#c7d2fe' }}>Tpo Llegada (min)</span>,
       dataIndex: 'student_arrival_time',
       key: 'student_arrival_time',
       width: 135,
+      onHeaderCell: () => ({ className: 'header-col-students' }),
+      onCell: () => ({ className: 'cell-col-students' }),
       render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
     },
     {
-      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}>Próx. Llegada</span>,
+      title: <span style={{ fontSize: '11px', color: '#c7d2fe' }}>Próx. Llegada</span>,
       dataIndex: 'student_next_arrival_time',
       key: 'student_next_arrival_time',
       width: 115,
+      onHeaderCell: () => ({ className: 'header-col-students' }),
+      onCell: () => ({ className: 'cell-col-students' }),
       render: (val) => val !== null ? <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#c084fc' }}>{new Date(val * 1000).toISOString().substr(11, 8)}</span> : renderMutedMonospace(null)
     },
     {
-      title: <span style={{ fontSize: '11px', color: '#64748b' }}><ExperimentOutlined /> RND Insc.</span>,
-      dataIndex: 'registration_rnd',
-      key: 'registration_rnd',
-      width: 105,
-      render: (val) => renderMutedMonospace(val, true, 4)
-    },
-    {
-      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}>Tpo Insc. (min)</span>,
-      dataIndex: 'registration_time',
-      key: 'registration_time',
-      width: 120,
-      render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
-    },
-    {
-      title: <span style={{ fontSize: '11px', color: '#64748b' }}><ExperimentOutlined /> RND Mant.</span>,
-      dataIndex: 'maintenance_rnd',
-      key: 'maintenance_rnd',
-      width: 105,
-      render: (val) => renderMutedMonospace(val, true, 4)
-    },
-    {
-      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}>Tpo Mant. (min)</span>,
-      dataIndex: 'maintenance_time',
-      key: 'maintenance_time',
-      width: 120,
-      render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
-    },
-    {
-      title: <span style={{ fontSize: '11px', color: '#64748b' }}><ExperimentOutlined /> RND Regreso Téc.</span>,
-      dataIndex: 'technician_return_rnd',
-      key: 'technician_return_rnd',
-      width: 135,
-      render: (val) => renderMutedMonospace(val, true, 4)
-    },
-    {
-      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}>Tpo Regreso Téc. (min)</span>,
-      dataIndex: 'technician_return_time',
-      key: 'technician_return_time',
-      width: 145,
-      render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
-    },
-    {
-      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}>Insc. Comp.</span>,
-      dataIndex: 'registrations_completed',
-      key: 'registrations_completed',
-      width: 110,
-      render: (val) => <Text style={{ color: '#34d399', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '11px' }}>{val}</Text>
-    },
-    {
-      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}>Alumnos Rech.</span>,
+      title: <span style={{ fontSize: '11px', color: '#c7d2fe' }}>Alumnos Rech.</span>,
       dataIndex: 'total_students_returned',
       key: 'total_students_returned',
       width: 110,
+      onHeaderCell: () => ({ className: 'header-col-students' }),
+      onCell: () => ({ className: 'cell-col-students' }),
       render: (val) => val > 0 ? <span style={{ color: '#f87171', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '11px' }}>{val}</span> : <span style={{ color: '#475569', fontSize: '11px', fontFamily: 'monospace' }}>0</span>
+    },
+
+    // --- CATEGORY 3: COMPUTADORAS (COMPUTERS) ---
+    {
+      title: <span style={{ fontSize: '11px', color: '#a7f3d0' }}><LaptopOutlined /> Servidores (LED)</span>,
+      dataIndex: 'pc_states',
+      key: 'pc_states',
+      width: 175,
+      onHeaderCell: () => ({ className: 'header-col-computers' }),
+      onCell: () => ({ className: 'cell-col-computers' }),
+      render: (states) => renderPcStates(states)
+    },
+    {
+      title: <span style={{ fontSize: '11px', color: '#a7f3d0' }}><ExperimentOutlined /> RND Insc.</span>,
+      dataIndex: 'registration_rnd',
+      key: 'registration_rnd',
+      width: 105,
+      onHeaderCell: () => ({ className: 'header-col-computers' }),
+      onCell: () => ({ className: 'cell-col-computers' }),
+      render: (val) => renderMutedMonospace(val, true, 4)
+    },
+    {
+      title: <span style={{ fontSize: '11px', color: '#a7f3d0' }}>Tpo Insc. (min)</span>,
+      dataIndex: 'registration_time',
+      key: 'registration_time',
+      width: 120,
+      onHeaderCell: () => ({ className: 'header-col-computers' }),
+      onCell: () => ({ className: 'cell-col-computers' }),
+      render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
+    },
+    {
+      title: <span style={{ fontSize: '11px', color: '#a7f3d0' }}>Insc. Comp.</span>,
+      dataIndex: 'registrations_completed',
+      key: 'registrations_completed',
+      width: 110,
+      onHeaderCell: () => ({ className: 'header-col-computers' }),
+      onCell: () => ({ className: 'cell-col-computers' }),
+      render: (val) => <Text style={{ color: '#34d399', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '11px' }}>{val}</Text>
+    },
+
+    // --- CATEGORY 4: MANTENIMIENTO & TÉCNICO (MAINTENANCE) ---
+    {
+      title: <span style={{ fontSize: '11px', color: '#fde68a' }}><ExperimentOutlined /> RND Mant.</span>,
+      dataIndex: 'maintenance_rnd',
+      key: 'maintenance_rnd',
+      width: 105,
+      onHeaderCell: () => ({ className: 'header-col-maintenance' }),
+      onCell: () => ({ className: 'cell-col-maintenance' }),
+      render: (val) => renderMutedMonospace(val, true, 4)
+    },
+    {
+      title: <span style={{ fontSize: '11px', color: '#fde68a' }}>Tpo Mant. (min)</span>,
+      dataIndex: 'maintenance_time',
+      key: 'maintenance_time',
+      width: 120,
+      onHeaderCell: () => ({ className: 'header-col-maintenance' }),
+      onCell: () => ({ className: 'cell-col-maintenance' }),
+      render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
+    },
+    {
+      title: <span style={{ fontSize: '11px', color: '#fde68a' }}><ExperimentOutlined /> RND Regreso Téc.</span>,
+      dataIndex: 'technician_return_rnd',
+      key: 'technician_return_rnd',
+      width: 135,
+      onHeaderCell: () => ({ className: 'header-col-maintenance' }),
+      onCell: () => ({ className: 'cell-col-maintenance' }),
+      render: (val) => renderMutedMonospace(val, true, 4)
+    },
+    {
+      title: <span style={{ fontSize: '11px', color: '#fde68a' }}>Tpo Regreso Téc. (min)</span>,
+      dataIndex: 'technician_return_time',
+      key: 'technician_return_time',
+      width: 145,
+      onHeaderCell: () => ({ className: 'header-col-maintenance' }),
+      onCell: () => ({ className: 'cell-col-maintenance' }),
+      render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
     }
   ];
 

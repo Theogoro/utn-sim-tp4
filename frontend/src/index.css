@@ -186,4 +186,58 @@ body {
   color: #f8fafc !important;
 }
 
+/* Trace table category color-coding columns */
+.header-col-general {
+  background: rgba(15, 23, 42, 0.75) !important;
+  border-bottom: 2.5px solid rgba(148, 163, 184, 0.25) !important;
+}
+
+.header-col-students {
+  background: rgba(99, 102, 241, 0.12) !important;
+  border-bottom: 2.5px solid #6366f1 !important;
+}
+
+.header-col-computers {
+  background: rgba(16, 185, 129, 0.09) !important;
+  border-bottom: 2.5px solid #10b981 !important;
+}
+
+.header-col-maintenance {
+  background: rgba(245, 158, 11, 0.09) !important;
+  border-bottom: 2.5px solid #f59e0b !important;
+}
+
+.cell-col-students {
+  background: rgba(99, 102, 241, 0.015) !important;
+  border-right: 1px solid rgba(99, 102, 241, 0.04) !important;
+}
+
+.cell-col-computers {
+  background: rgba(16, 185, 129, 0.015) !important;
+  border-right: 1px solid rgba(16, 185, 129, 0.04) !important;
+}
+
+.cell-col-maintenance {
+  background: rgba(245, 158, 11, 0.015) !important;
+  border-right: 1px solid rgba(245, 158, 11, 0.04) !important;
+}
+
+/* Fix Ant Design fixed columns overlapping/transparency bug on horizontal scroll */
+.ant-table-cell-fix-left, 
+.ant-table-cell-fix-right {
+  background: #111524 !important; /* Solid opaque dark color matching panel blend */
+}
+
+/* Specific solid headers for general fixed columns to override transparent background */
+.header-col-general.ant-table-cell-fix-left {
+  background: #161a29 !important; /* Solid general header */
+}
+
+/* Add a clean vertical divider shadow/border to separate fixed left columns on scroll */
+.ant-table-cell-fix-left-last {
+  border-right: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 4px 0 8px rgba(0, 0, 0, 0.5) !important;
+}
+
+
 
