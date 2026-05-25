@@ -6,7 +6,18 @@ import {
   HourglassOutlined, 
   UserDeleteOutlined, 
   ToolOutlined, 
-  TrophyOutlined 
+  TrophyOutlined,
+  LaptopOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+  TeamOutlined,
+  SyncOutlined,
+  SettingOutlined,
+  WarningOutlined,
+  ExperimentOutlined,
+  DashboardOutlined,
+  GlobalOutlined,
+  PartitionOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -110,181 +121,297 @@ const SimulationDetails = ({ simulationId }) => {
 
   if (!simulation) return null;
 
-  // Render PC statuses color-coded
+  // Helper to render beautiful muted monospace text for numbers
+  const renderMutedMonospace = (val, isRnd = false, decimals = 4, suffix = '') => {
+    if (val === null || val === undefined) return <span style={{ color: '#475569' }}>-</span>;
+    const displayVal = typeof val === 'number' ? val.toFixed(decimals) : val;
+    return (
+      <span style={{
+        fontFamily: 'monospace, var(--font-family)',
+        color: isRnd ? '#64748b' : '#94a3b8',
+        fontSize: '11px',
+        fontWeight: isRnd ? '400' : '600'
+      }}>
+        {displayVal}{suffix}
+      </span>
+    );
+  };
+
+  // Render PC statuses as physical server blades with glowing LEDs
   const renderPcStates = (pcStatesStr) => {
     if (!pcStatesStr) return null;
     const states = pcStatesStr.split(',');
     return (
-      <Space size={4}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', alignItems: 'center' }}>
         {states.map((st, i) => {
-          let color = 'rgba(74, 222, 128, 0.2)'; // idle light green
-          let borderColor = '#4ade80';
-          let textColor = '#4ade80';
-          let label = 'I';
+          let ledColor = '#10b981'; // Libre - emerald green
+          let ledGlow = '0 0 6px rgba(16, 185, 129, 0.75)';
+          let statusText = 'LIBRE';
+          let border = 'rgba(16, 185, 129, 0.15)';
+          let pulseClass = '';
           
           if (st === 'busy' || st === 'B') {
-            color = 'rgba(96, 165, 250, 0.2)'; // busy blue
-            borderColor = '#60a5fa';
-            textColor = '#60a5fa';
-            label = 'B';
+            ledColor = '#3b82f6'; // Ocupado - electric blue
+            ledGlow = '0 0 8px rgba(59, 130, 246, 0.85), 0 0 15px rgba(59, 130, 246, 0.4)';
+            statusText = 'OCUPADO';
+            border = 'rgba(59, 130, 246, 0.2)';
+            pulseClass = 'led-pulse-blue';
           } else if (st === 'maintenance' || st === 'M') {
-            color = 'rgba(251, 146, 60, 0.2)'; // maint orange
-            borderColor = '#fb923c';
-            textColor = '#fb923c';
-            label = 'M';
+            ledColor = '#f59e0b'; // Mantenimiento - bright orange
+            ledGlow = '0 0 8px rgba(245, 158, 11, 0.85), 0 0 15px rgba(245, 158, 11, 0.4)';
+            statusText = 'MANTENIMIENTO';
+            border = 'rgba(245, 158, 11, 0.25)';
+            pulseClass = 'led-pulse-orange';
           }
           
           return (
-            <Tooltip key={i} title={`PC ${i + 1}: ${st.toUpperCase()}`}>
-              <span style={{ 
-                display: 'inline-block',
-                width: 20,
-                textAlign: 'center',
-                fontSize: 11,
-                fontWeight: 'bold',
-                borderRadius: 4,
-                backgroundColor: color,
-                border: `1px solid ${borderColor}`,
-                color: textColor,
-                cursor: 'help'
+            <Tooltip key={i} title={`PC ${i + 1}: ${statusText}`} mouseEnterDelay={0.05}>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                background: 'rgba(9, 13, 22, 0.65)',
+                border: `1px solid ${border}`,
+                borderRadius: '5px',
+                padding: '2px 5px',
+                gap: '4px',
+                height: '18px',
+                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.5)'
               }}>
-                {label}
-              </span>
+                <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 700, fontFamily: 'monospace' }}>
+                  {i + 1}
+                </span>
+                <span 
+                  className={pulseClass}
+                  style={{
+                    display: 'inline-block',
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: ledColor,
+                    boxShadow: ledGlow,
+                    transition: 'all 0.2s ease'
+                  }} 
+                />
+              </div>
             </Tooltip>
           );
         })}
-      </Space>
+      </div>
     );
   };
 
   const columns = [
     {
-      title: 'Fila',
+      title: <span style={{ fontSize: '11px', color: '#64748b' }}>Fila</span>,
       dataIndex: 'line_index',
       key: 'line_index',
-      width: 80,
+      width: 75,
       fixed: 'left',
-      render: (idx) => <Text style={{ color: '#64748b' }}>{idx}</Text>
+      render: (idx) => <Text style={{ color: '#475569', fontFamily: 'monospace', fontSize: '11px' }}>{idx}</Text>
     },
     {
-      title: 'Reloj',
+      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}><ClockCircleOutlined /> Reloj</span>,
       dataIndex: 'clock_formatted',
       key: 'clock_formatted',
-      width: 90,
+      width: 100,
       fixed: 'left',
-      render: (t) => <strong style={{ color: '#c084fc' }}>{t}</strong>
+      render: (t) => <strong style={{ color: '#c084fc', fontFamily: 'monospace', fontSize: '11px', textShadow: '0 0 6px rgba(192, 132, 252, 0.15)' }}>{t}</strong>
     },
     {
-      title: 'Evento',
+      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}><SettingOutlined /> Evento</span>,
       dataIndex: 'event_name',
       key: 'event_name',
-      width: 220,
+      width: 210,
       render: (evt) => {
-        let evtTranslated = evt;
-        if (evt === 'student_arrival') evtTranslated = 'Llegada de Alumno';
-        else if (evt === 'technician_arrival') evtTranslated = 'Llegada de Técnico';
-        else if (evt === 'maintenance_complete') evtTranslated = 'Fin Mantenimiento';
-        else if (evt === 'student_return') evtTranslated = 'Retorno de Alumno';
-        else if (evt.startsWith('registration_complete_pc')) {
+        let label = evt;
+        let color = '#a855f7'; // default purple
+        let bgColor = 'rgba(168, 85, 247, 0.08)';
+        let borderColor = 'rgba(168, 85, 247, 0.2)';
+        let textShadow = '0 0 6px rgba(168, 85, 247, 0.2)';
+
+        if (evt === 'student_arrival') {
+          label = 'Llegada Alumno';
+          color = '#c084fc'; // light purple
+          bgColor = 'rgba(192, 132, 252, 0.08)';
+          borderColor = 'rgba(192, 132, 252, 0.25)';
+          textShadow = '0 0 6px rgba(192, 132, 252, 0.25)';
+        } else if (evt === 'student_return') {
+          label = 'Retorno Alumno';
+          color = '#22d3ee'; // cyan
+          bgColor = 'rgba(34, 211, 238, 0.08)';
+          borderColor = 'rgba(34, 211, 238, 0.25)';
+          textShadow = '0 0 6px rgba(34, 211, 238, 0.25)';
+        } else if (evt === 'technician_arrival') {
+          label = 'Llegada Técnico';
+          color = '#fbbf24'; // gold
+          bgColor = 'rgba(251, 191, 36, 0.08)';
+          borderColor = 'rgba(251, 191, 36, 0.25)';
+          textShadow = '0 0 6px rgba(251, 191, 36, 0.25)';
+        } else if (evt === 'maintenance_complete') {
+          label = 'Fin Mantenimiento';
+          color = '#f97316'; // orange
+          bgColor = 'rgba(249, 115, 22, 0.08)';
+          borderColor = 'rgba(249, 115, 22, 0.25)';
+          textShadow = '0 0 6px rgba(249, 115, 22, 0.25)';
+        } else if (evt.startsWith('registration_complete_pc')) {
           const pcNum = evt.replace('registration_complete_pc', '');
-          evtTranslated = `Fin Inscripción PC ${pcNum}`;
+          label = `Fin Inscripción PC ${pcNum}`;
+          color = '#34d399'; // emerald green
+          bgColor = 'rgba(52, 211, 153, 0.08)';
+          borderColor = 'rgba(52, 211, 153, 0.25)';
+          textShadow = '0 0 6px rgba(52, 211, 153, 0.25)';
         }
-        return <Text style={{ color: '#e2e8f0', fontFamily: 'monospace' }}>{evtTranslated}</Text>;
+
+        return (
+          <span style={{
+            display: 'inline-block',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            backgroundColor: bgColor,
+            border: `1px solid ${borderColor}`,
+            color: color,
+            fontWeight: 600,
+            fontSize: '11px',
+            textShadow: textShadow,
+            letterSpacing: '0.01em',
+            fontFamily: 'monospace'
+          }}>
+            {label}
+          </span>
+        );
       }
     },
     {
-      title: 'Cola',
+      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}><TeamOutlined /> Cola</span>,
       dataIndex: 'queue_length',
       key: 'queue_length',
-      width: 80,
+      width: 75,
       render: (len) => {
-        const color = len > 5 ? '#f87171' : len > 3 ? '#fb923c' : '#f8fafc';
-        return <strong style={{ color }}>{len}</strong>;
+        const limit = simulation?.student_wait_threshold || 5;
+        let color = '#94a3b8'; // gray
+        let bgColor = 'rgba(148, 163, 184, 0.05)';
+        let border = '1px solid rgba(148, 163, 184, 0.12)';
+        
+        if (len > 0) {
+          if (len >= limit) {
+            color = '#f87171'; // red alert
+            bgColor = 'rgba(248, 113, 113, 0.12)';
+            border = '1px solid rgba(248, 113, 113, 0.35)';
+          } else if (len >= limit - 2) {
+            color = '#fb923c'; // orange warning
+            bgColor = 'rgba(251, 146, 60, 0.08)';
+            border = '1px solid rgba(251, 146, 60, 0.25)';
+          } else {
+            color = '#38bdf8'; // blue load
+            bgColor = 'rgba(56, 189, 248, 0.06)';
+            border = '1px solid rgba(56, 189, 248, 0.18)';
+          }
+        }
+
+        return (
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: '22px',
+            height: '18px',
+            padding: '0 5px',
+            borderRadius: '4px',
+            backgroundColor: bgColor,
+            border: border,
+            color: color,
+            fontWeight: '700',
+            fontSize: '11px',
+            fontFamily: 'monospace'
+          }}>
+            {len}
+          </span>
+        );
       }
     },
     {
-      title: 'Estado de PCs',
+      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}><LaptopOutlined /> Servidores (LED)</span>,
       dataIndex: 'pc_states',
       key: 'pc_states',
-      width: 170,
+      width: 175,
       render: (states) => renderPcStates(states)
     },
     {
-      title: 'RND Llegada',
+      title: <span style={{ fontSize: '11px', color: '#64748b' }}><ExperimentOutlined /> RND Lleg.</span>,
       dataIndex: 'student_rnd',
       key: 'student_rnd',
       width: 110,
-      render: (val) => val !== null ? val.toFixed(4) : ''
+      render: (val) => renderMutedMonospace(val, true, 4)
     },
     {
-      title: 'Tpo Llegada',
+      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}>Tpo Llegada (min)</span>,
       dataIndex: 'student_arrival_time',
       key: 'student_arrival_time',
-      width: 130,
-      render: (val) => val !== null ? `${val.toFixed(1)}s` : ''
+      width: 135,
+      render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
     },
     {
-      title: 'Próx. Llegada',
+      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}>Próx. Llegada</span>,
       dataIndex: 'student_next_arrival_time',
       key: 'student_next_arrival_time',
-      width: 120,
-      render: (val) => val !== null ? new Date(val * 1000).toISOString().substr(11, 8) : ''
+      width: 115,
+      render: (val) => val !== null ? <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#c084fc' }}>{new Date(val * 1000).toISOString().substr(11, 8)}</span> : renderMutedMonospace(null)
     },
     {
-      title: 'RND Insc.',
+      title: <span style={{ fontSize: '11px', color: '#64748b' }}><ExperimentOutlined /> RND Insc.</span>,
       dataIndex: 'registration_rnd',
       key: 'registration_rnd',
-      width: 110,
-      render: (val) => val !== null ? val.toFixed(4) : ''
+      width: 105,
+      render: (val) => renderMutedMonospace(val, true, 4)
     },
     {
-      title: 'Tpo Insc.',
+      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}>Tpo Insc. (min)</span>,
       dataIndex: 'registration_time',
       key: 'registration_time',
       width: 120,
-      render: (val) => val !== null ? `${val.toFixed(1)}s` : ''
+      render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
     },
     {
-      title: 'RND Mant.',
+      title: <span style={{ fontSize: '11px', color: '#64748b' }}><ExperimentOutlined /> RND Mant.</span>,
       dataIndex: 'maintenance_rnd',
       key: 'maintenance_rnd',
-      width: 110,
-      render: (val) => val !== null ? val.toFixed(4) : ''
+      width: 105,
+      render: (val) => renderMutedMonospace(val, true, 4)
     },
     {
-      title: 'Tpo Mant.',
+      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}>Tpo Mant. (min)</span>,
       dataIndex: 'maintenance_time',
       key: 'maintenance_time',
       width: 120,
-      render: (val) => val !== null ? `${val.toFixed(1)}s` : ''
+      render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
     },
     {
-      title: 'RND Regreso Téc.',
+      title: <span style={{ fontSize: '11px', color: '#64748b' }}><ExperimentOutlined /> RND Regreso</span>,
       dataIndex: 'technician_return_rnd',
       key: 'technician_return_rnd',
-      width: 130,
-      render: (val) => val !== null ? val.toFixed(4) : ''
+      width: 125,
+      render: (val) => renderMutedMonospace(val, true, 4)
     },
     {
-      title: 'Tpo Regreso Téc.',
+      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}>Tpo Regreso (min)</span>,
       dataIndex: 'technician_return_time',
       key: 'technician_return_time',
-      width: 130,
-      render: (val) => val !== null ? `${val.toFixed(1)}s` : ''
+      width: 135,
+      render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
     },
     {
-      title: 'Insc. Comp.',
+      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}>Insc. Comp.</span>,
       dataIndex: 'registrations_completed',
       key: 'registrations_completed',
-      width: 120,
-      render: (val) => <Text style={{ color: '#4ade80', fontWeight: 'bold' }}>{val}</Text>
+      width: 110,
+      render: (val) => <Text style={{ color: '#34d399', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '11px' }}>{val}</Text>
     },
     {
-      title: 'Alumnos Rech.',
+      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}>Alumnos Rech.</span>,
       dataIndex: 'total_students_returned',
       key: 'total_students_returned',
-      width: 120,
-      render: (val) => val > 0 ? <Text style={{ color: '#f87171', fontWeight: 'bold' }}>{val}</Text> : '0'
+      width: 110,
+      render: (val) => val > 0 ? <span style={{ color: '#f87171', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '11px' }}>{val}</span> : <span style={{ color: '#475569', fontSize: '11px', fontFamily: 'monospace' }}>0</span>
     }
   ];
 
@@ -393,40 +520,117 @@ const SimulationDetails = ({ simulationId }) => {
         </Col>
 
         <Col xs={24} lg={8}>
-          <Card className="glass-panel" title={<span style={{ color: '#f8fafc' }}>Configuración Simulación</span>} style={{ height: '100%' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 8px', fontSize: 13 }}>
-              <div>
-                <Text type="secondary" style={{ fontSize: 11 }}>INFRAESTRUCTURA</Text>
-                <div style={{ color: '#f8fafc', fontWeight: 'bold' }}>{simulation.num_pcs} computadoras</div>
+          <Card 
+            className="glass-panel" 
+            title={
+              <Space>
+                <SettingOutlined style={{ color: '#818cf8' }} />
+                <span style={{ color: '#f8fafc', fontWeight: 600 }}>Parámetros de la Simulación</span>
+              </Space>
+            } 
+            style={{ height: '100%', background: 'rgba(15, 23, 42, 0.4)' }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              
+              {/* 1. INFRAESTRUCTURA & TIEMPO */}
+              <div style={{ padding: '10px 12px', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#818cf8', fontWeight: 600, fontSize: '11px', letterSpacing: '0.05em' }}>
+                  <LaptopOutlined />
+                  <span>SISTEMA & TIEMPO SIMULADO</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginBottom: '2px' }}>INFRAESTRUCTURA</Text>
+                    <Tag color="blue" style={{ fontSize: '11px', fontWeight: 'bold', margin: 0, width: '100%', textAlign: 'center', border: '1px solid rgba(96, 165, 250, 0.15)' }}>
+                      {simulation.num_pcs} PCs
+                    </Tag>
+                  </div>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginBottom: '2px' }}>TIEMPO TOTAL</Text>
+                    <Tag color="cyan" style={{ fontSize: '11px', fontWeight: 'bold', margin: 0, width: '100%', textAlign: 'center', border: '1px solid rgba(34, 211, 238, 0.15)' }}>
+                      {simulation.sim_hours || (simulation.sim_days * 24)} horas
+                    </Tag>
+                  </div>
+                </div>
               </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: 11 }}>TIEMPO SIMULADO</Text>
-                <div style={{ color: '#f8fafc', fontWeight: 'bold' }}>{simulation.sim_hours || (simulation.sim_days * 24)} horas</div>
+
+              {/* 2. CICLO DE ALUMNOS */}
+              <div style={{ padding: '10px 12px', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#c084fc', fontWeight: 600, fontSize: '11px', letterSpacing: '0.05em' }}>
+                  <TeamOutlined />
+                  <span>LLEGADAS & INSCRIPCIONES</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginBottom: '2px' }}>LLEGADAS (MEDIA)</Text>
+                    <div style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <ClockCircleOutlined style={{ color: '#c084fc', fontSize: '11px' }} />
+                      {simulation.mean_arrival_time} min
+                    </div>
+                  </div>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginBottom: '2px' }}>INSCRIPCIÓN MÍN/MÁX</Text>
+                    <div style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <HourglassOutlined style={{ color: '#c084fc', fontSize: '11px' }} />
+                      {simulation.min_enrollment}-{simulation.max_enrollment} min
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: 11 }}>INSCRIPCIÓN MÍN/MÁX</Text>
-                <div style={{ color: '#f8fafc', fontWeight: 'bold' }}>{simulation.min_enrollment} min - {simulation.max_enrollment} min</div>
+
+              {/* 3. MANTENIMIENTO TÉCNICO */}
+              <div style={{ padding: '10px 12px', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#fb923c', fontWeight: 600, fontSize: '11px', letterSpacing: '0.05em' }}>
+                  <ToolOutlined />
+                  <span>MANTENIMIENTO DEL TÉCNICO</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginBottom: '2px' }}>REGRESO (MEDIA)</Text>
+                      <div style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <SyncOutlined style={{ color: '#fb923c', fontSize: '11px' }} />
+                        {simulation.mean_technician_return_time} min
+                      </div>
+                    </div>
+                    <div>
+                      <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginBottom: '2px' }}>VARIACIÓN (+/-)</Text>
+                      <div style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '12px' }}>
+                        &plusmn; {simulation.technician_return_time_variation} min
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '4px', marginTop: '2px' }}>
+                    <Text type="secondary" style={{ fontSize: '9px', display: 'inline', marginRight: '6px' }}>MANTENIMIENTO:</Text>
+                    <span style={{ color: '#e2e8f0', fontWeight: '600', fontSize: '10px' }}>
+                      {simulation.min_maintenance_time} a {simulation.max_maintenance_time} min
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: 11 }}>LLEGADAS (MEDIA)</Text>
-                <div style={{ color: '#f8fafc', fontWeight: 'bold' }}>{simulation.mean_arrival_time} min</div>
+
+              {/* 4. TOLERANCIA DEL ALUMNO */}
+              <div style={{ padding: '10px 12px', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#f87171', fontWeight: 600, fontSize: '11px', letterSpacing: '0.05em' }}>
+                  <WarningOutlined />
+                  <span>TOLERANCIA DEL ALUMNO</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginBottom: '2px' }}>LÍMITE DE COLA</Text>
+                    <Tag color="error" style={{ fontSize: '11px', fontWeight: 'bold', margin: 0, width: '100%', textAlign: 'center', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+                      {simulation.student_wait_threshold} alumnos
+                    </Tag>
+                  </div>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginBottom: '2px' }}>DEMORA RETORNO</Text>
+                    <div style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '12px', paddingTop: '2px' }}>
+                      {simulation.student_return_time} min
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: 11 }}>MANTENIMIENTO MÍN/MÁX</Text>
-                <div style={{ color: '#f8fafc', fontWeight: 'bold' }}>{simulation.min_maintenance_time} min - {simulation.max_maintenance_time} min</div>
-              </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: 11 }}>FRECUENCIA REGRESO TÉC.</Text>
-                <div style={{ color: '#f8fafc', fontWeight: 'bold' }}>{simulation.mean_technician_return_time} min &plusmn; {simulation.technician_return_time_variation} min</div>
-              </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: 11 }}>LÍMITE DE COLA</Text>
-                <div style={{ color: '#f8fafc', fontWeight: 'bold' }}>{simulation.student_wait_threshold} alumnos</div>
-              </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: 11 }}>DEMORA DE RETORNO</Text>
-                <div style={{ color: '#f8fafc', fontWeight: 'bold' }}>{simulation.student_return_time} min</div>
-              </div>
+
             </div>
           </Card>
         </Col>
