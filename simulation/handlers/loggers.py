@@ -55,24 +55,24 @@ class ConsoleLoggerHandler(SimulationHandler):
         rnd_ret = f"{state.technician_return_rnd:.4f}" if state.technician_return_rnd is not None else ""
         tpo_ret = f"{state.technician_return_time:.1f}s" if state.technician_return_time is not None else ""
         
-        # Truncar nombre del evento a 22 caracteres
-        evt_name = state.event[:22]
+        # Mantener visible el sufijo de PC en eventos como registration_complete_pc1.
+        evt_name = state.event[:25]
         
         # Formatear reloj absoluto en hh:mm:ss
         reloj_str = format_time(state.current_time)
         
         # Imprimir fila del vector de estado
-        print(f"{reloj_str:>9} | {evt_name:<22} | {len(state.queue):>4} | {pc_str} | {rnd_arr:>8} | {tpo_arr:>8} | {prox_arr:>8} | {rnd_reg:>8} | {tpo_reg:>8} | {rnd_maint:>8} | {tpo_maint:>8} | {rnd_ret:>8} | {tpo_ret:>8} | {state.stats.registrations_completed:>6} | {state.stats.total_students_returned:>6}")
+        print(f"{reloj_str:>9} | {evt_name:<25} | {len(state.queue):>4} | {pc_str} | {rnd_arr:>8} | {tpo_arr:>8} | {prox_arr:>8} | {rnd_reg:>8} | {tpo_reg:>8} | {rnd_maint:>8} | {tpo_maint:>8} | {rnd_ret:>8} | {tpo_ret:>8} | {state.stats.registrations_completed:>9} | {state.stats.total_students_returned:>6}")
         
         self.counter += 1
         if self.counter == self.limit:
-            print("=" * 168)
+            print("=" * 174)
             print("... [El resto de la simulación se ejecuta en segundo plano para estabilidad estadística] ...")
-            print("=" * 168)
+            print("=" * 174)
 
     def print_header(self):
-        print("\n" + "="*168)
+        print("\n" + "="*174)
         print("|                                           TABLA DE VECTOR DE ESTADOS DE SIMULACIÓN (CON AUDITORÍA DE RNDs)                                         |")
-        print("="*168)
-        print(f"{'Reloj':>9} | {'Evento':<22} | {'Cola':>4} | {'PC1 | PC2 | PC3 | PC4 | PC5 | PC6'} | {'RND Lleg':>8} | {'Tpo Lleg':>8} | {'Prox Llg':>8} | {'RND Insc':>8} | {'Tpo Insc':>8} | {'RND Mant':>8} | {'Tpo Mant':>8} | {'RND RegT':>8} | {'Tpo RegT':>8} | {'Inscrip':>6} | {'Rechaz':>6}")
-        print("-"*168)
+        print("="*174)
+        print(f"{'Reloj':>9} | {'Evento':<25} | {'Cola':>4} | {'PC1 | PC2 | PC3 | PC4 | PC5 | PC6'} | {'RND Lleg':>8} | {'Tpo Lleg':>8} | {'Prox Llg':>8} | {'RND Insc':>8} | {'Tpo Insc':>8} | {'RND Mant':>8} | {'Tpo Mant':>8} | {'RND RegT':>8} | {'Tpo RegT':>8} | {'InscComp':>9} | {'Rechaz':>6}")
+        print("-"*174)

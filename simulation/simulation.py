@@ -59,7 +59,7 @@ class Simulation:
             
         # Avanzar el reloj al instante del próximo evento
         self.state.current_time = next_time
-        self.state.event = f"{event_type}_{pc_index}" if pc_index is not None else event_type
+        self.state.event = f"{event_type}_pc{pc_index + 1}" if pc_index is not None else event_type
         
         # Resetear variables de RND y duración temporales al inicio de la fila
         self.state.student_rnd = None
