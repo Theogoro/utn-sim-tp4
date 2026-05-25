@@ -489,7 +489,7 @@ const SimulationDetails = ({ simulationId }) => {
         <Col xs={12} sm={12} md={5}>
           <div className="kpi-card glass-panel" style={{ height: '100%' }}>
             <Statistic
-              title={<span style={{ color: '#94a3b8', fontSize: 13 }}>% Alumnos Rechazados</span>}
+              title={<span style={{ color: '#94a3b8', fontSize: 13 }}>% Intentos Rechazados</span>}
               value={simulation.pct_students_returned}
               precision={2}
               valueStyle={{ color: simulation.pct_students_returned > 0 ? '#fb923c' : '#4ade80', fontWeight: 700 }}
@@ -497,7 +497,7 @@ const SimulationDetails = ({ simulationId }) => {
               suffix="%"
             />
             <Text style={{ fontSize: 11, color: '#64748b' }}>
-              {simulation.total_students_returned} de {simulation.total_new_students_arrived} se retiraron
+              {simulation.total_students_returned} de {simulation.total_students_arrived} intentos se retiraron
             </Text>
           </div>
         </Col>

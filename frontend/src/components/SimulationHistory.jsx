@@ -61,7 +61,7 @@ const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading 
       render: (count) => count.toLocaleString()
     },
     {
-      title: '% Rechazados',
+      title: '% Intentos Rech.',
       dataIndex: 'pct_students_returned',
       key: 'pct_students_returned',
       render: (pct) => {

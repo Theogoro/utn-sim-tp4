@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Layout, Typography, Space, message, ConfigProvider, theme, Tag } from 'antd';
 import { ExperimentOutlined } from '@ant-design/icons';
-import axios from 'axios';
 
 import SimulationForm from './components/SimulationForm';
 import SimulationHistory from './components/SimulationHistory';
 import SimulationDetails from './components/SimulationDetails';
+import { createSimulation, deleteSimulation, listSimulations } from './api/simulations';
 
 const { Header, Content, Footer } = Layout;
 const { Title, Text } = Typography;
@@ -16,8 +16,6 @@ const App = () => {
   const [loadingList, setLoadingList] = useState(false);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
 
-  const API_URL = 'http://127.0.0.1:8000/api';
-
   useEffect(() => {
     fetchSimulations();
   }, []);
@@ -25,7 +23,7 @@ const App = () => {
   const fetchSimulations = async () => {
     setLoadingList(true);
     try {
-      const res = await axios.get(`${API_URL}/simulations`);
+      const res = await listSimulations();
       setSimulations(res.data);
       
       // Auto-select the latest simulation if none selected and simulations exist
@@ -45,7 +43,7 @@ const App = () => {
     const key = 'simulating';
     message.loading({ content: 'Ejecutando Simulación de Eventos Discretos (FEL)... esto puede tardar un momento...', key, duration: 0 });
     try {
-      const res = await axios.post(`${API_URL}/simulations`, params);
+      const res = await createSimulation(params);
       message.success({ content: `¡Simulación #${res.data.id} completada y registrada con éxito!`, key, duration: 4 });
       
       // Update list
@@ -62,7 +60,7 @@ const App = () => {
 
   const handleDeleteSimulation = async (id) => {
     try {
-      await axios.delete(`${API_URL}/simulations/${id}`);
+      await deleteSimulation(id);
       message.success("Simulación eliminada correctamente.");
       
       // Remove from state
