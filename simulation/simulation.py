@@ -47,7 +47,12 @@ class Simulation:
   def run(self, max_time: float) -> SimulationState:
     """Ejecuta el bucle principal de la simulación por pasos de eventos."""
     # 1. Programar eventos iniciales (primer alumno y primer técnico)
+    self.state.event = 'inicialización'
     self.state.initialize_events(self.params)
+    
+    # Registrar el estado inicial (Fila 0) en los observadores (loggers)
+    for handler in self.handlers:
+        handler.trigger()
     
     # 2. Bucle principal de eventos
     while self.state.current_time < max_time:

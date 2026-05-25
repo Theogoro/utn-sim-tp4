@@ -229,7 +229,13 @@ const SimulationDetails = ({ simulationId }) => {
         let borderColor = 'rgba(168, 85, 247, 0.2)';
         let textShadow = '0 0 6px rgba(168, 85, 247, 0.2)';
 
-        if (evt === 'student_arrival') {
+        if (evt === 'inicialización' || evt === 'inicializacion' || evt === 'inicio' || evt === 'start') {
+          label = 'Inicialización';
+          color = '#94a3b8'; // steel blue/slate
+          bgColor = 'rgba(148, 163, 184, 0.08)';
+          borderColor = 'rgba(148, 163, 184, 0.25)';
+          textShadow = '0 0 6px rgba(148, 163, 184, 0.25)';
+        } else if (evt === 'student_arrival') {
           label = 'Llegada Alumno';
           color = '#c084fc'; // light purple
           bgColor = 'rgba(192, 132, 252, 0.08)';
@@ -386,17 +392,17 @@ const SimulationDetails = ({ simulationId }) => {
       render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
     },
     {
-      title: <span style={{ fontSize: '11px', color: '#64748b' }}><ExperimentOutlined /> RND Regreso</span>,
+      title: <span style={{ fontSize: '11px', color: '#64748b' }}><ExperimentOutlined /> RND Regreso Téc.</span>,
       dataIndex: 'technician_return_rnd',
       key: 'technician_return_rnd',
-      width: 125,
+      width: 135,
       render: (val) => renderMutedMonospace(val, true, 4)
     },
     {
-      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}>Tpo Regreso (min)</span>,
+      title: <span style={{ fontSize: '11px', color: '#94a3b8' }}>Tpo Regreso Téc. (min)</span>,
       dataIndex: 'technician_return_time',
       key: 'technician_return_time',
-      width: 135,
+      width: 145,
       render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
     },
     {

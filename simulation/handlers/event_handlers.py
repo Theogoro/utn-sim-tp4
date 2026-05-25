@@ -19,33 +19,31 @@ class StudentArrivalHandler(SimulationHandler):
         state.student_arrival_time = arrival_interval
         state.student_next_arrival_time = state.next_student_arrival = state.current_time + arrival_interval
         
-        # 2. Controlar la capacidad de la cola (más de 5 esperando -> se va)
-        if len(state.queue) > params.student_wait_threshold:
+        # 2. Intentar buscar un equipo libre
+        free_pc_index = None
+        for idx, pc in enumerate(state.servers):
+            if pc.state == 'idle':
+                free_pc_index = idx
+                break
+        
+        if free_pc_index is not None:
+            # Ocupar el equipo de inmediato
+            pc = state.servers[free_pc_index]
+            pc.change_state('busy', state.current_time)
+            
+            # Generar RND e intervalo uniforme para Inscripción
+            rnd_reg, enrollment_time = uniform(params.min_enrollment, params.max_enrollment)
+            state.registration_rnd = rnd_reg
+            state.registration_time = enrollment_time
+            state.next_registration_complete[free_pc_index] = state.current_time + enrollment_time
+        elif len(state.queue) >= params.student_wait_threshold:
             state.stats.total_students_returned += 1
             return_time = state.current_time + params.student_return_time
             state.student_returns.append(return_time)
             state.student_returns.sort()  # Mantener cronológico
         else:
-            # Intentar buscar un equipo libre
-            free_pc_index = None
-            for idx, pc in enumerate(state.servers):
-                if pc.state == 'idle':
-                    free_pc_index = idx
-                    break
-            
-            if free_pc_index is not None:
-                # Ocupar el equipo de inmediato
-                pc = state.servers[free_pc_index]
-                pc.change_state('busy', state.current_time)
-                
-                # Generar RND e intervalo uniforme para Inscripción
-                rnd_reg, enrollment_time = uniform(params.min_enrollment, params.max_enrollment)
-                state.registration_rnd = rnd_reg
-                state.registration_time = enrollment_time
-                state.next_registration_complete[free_pc_index] = state.current_time + enrollment_time
-            else:
-                # Entrar a la cola
-                state.queue.append(state.current_time)
+            # Entrar a la cola
+            state.queue.append(state.current_time)
 
 
 class RegistrationCompleteHandler(SimulationHandler):
@@ -225,30 +223,28 @@ class StudentReturnHandler(SimulationHandler):
         # Registrar intento de llegada
         state.stats.total_students_arrived += 1
         
-        # Controlar capacidad de la cola
-        if len(state.queue) > params.student_wait_threshold:
+        # Buscar PC libre
+        free_pc_index = None
+        for idx, pc in enumerate(state.servers):
+            if pc.state == 'idle':
+                free_pc_index = idx
+                break
+                
+        if free_pc_index is not None:
+            # Ocupar PC inmediatamente
+            pc = state.servers[free_pc_index]
+            pc.change_state('busy', state.current_time)
+            
+            # Generar RND e intervalo uniforme para Inscripción
+            rnd_reg, enrollment_time = uniform(params.min_enrollment, params.max_enrollment)
+            state.registration_rnd = rnd_reg
+            state.registration_time = enrollment_time
+            state.next_registration_complete[free_pc_index] = state.current_time + enrollment_time
+        elif len(state.queue) >= params.student_wait_threshold:
             state.stats.total_students_returned += 1
             return_time = state.current_time + params.student_return_time
             state.student_returns.append(return_time)
             state.student_returns.sort()
         else:
-            # Buscar PC libre
-            free_pc_index = None
-            for idx, pc in enumerate(state.servers):
-                if pc.state == 'idle':
-                    free_pc_index = idx
-                    break
-                    
-            if free_pc_index is not None:
-                # Ocupar PC inmediatamente
-                pc = state.servers[free_pc_index]
-                pc.change_state('busy', state.current_time)
-                
-                # Generar RND e intervalo uniforme para Inscripción
-                rnd_reg, enrollment_time = uniform(params.min_enrollment, params.max_enrollment)
-                state.registration_rnd = rnd_reg
-                state.registration_time = enrollment_time
-                state.next_registration_complete[free_pc_index] = state.current_time + enrollment_time
-            else:
-                # Hacer cola
-                state.queue.append(state.current_time)
+            # Hacer cola
+            state.queue.append(state.current_time)
