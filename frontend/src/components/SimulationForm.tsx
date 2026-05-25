@@ -1,20 +1,19 @@
-import React, { useState } from 'react';
 import { Form, InputNumber, Slider, Button, Card, Row, Col, Typography, Space, Tooltip } from 'antd';
+import type { SimulationParams } from '../types/simulation';
 import { 
   PlayCircleOutlined, 
   ReloadOutlined, 
   InfoCircleOutlined,
   LaptopOutlined,
   ClockCircleOutlined,
-  SlidersOutlined,
   ToolOutlined,
   WarningOutlined,
   HourglassOutlined
 } from '@ant-design/icons';
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph } = Typography;
 
-const UTN_PRESETS = {
+const UTN_PRESETS: SimulationParams = {
   num_pcs: 6,
   min_enrollment: 5.0,
   max_enrollment: 8.0,
@@ -30,14 +29,19 @@ const UTN_PRESETS = {
   sim_hours: 24.0,
 };
 
-const SimulationForm = ({ onSubmit, loading }) => {
-  const [form] = Form.useForm();
+interface SimulationFormProps {
+  onSubmit: (params: SimulationParams) => void | Promise<void>;
+  loading: boolean;
+}
+
+const SimulationForm = ({ onSubmit, loading }: SimulationFormProps) => {
+  const [form] = Form.useForm<SimulationParams>();
   
   const handleLoadPresets = () => {
     form.setFieldsValue(UTN_PRESETS);
   };
 
-  const onFinish = (values) => {
+  const onFinish = (values: SimulationParams) => {
     // Standardize min/max service time to match min/max enrollment automatically
     const updatedValues = {
       ...values,

@@ -1,5 +1,7 @@
-import React, { useMemo } from 'react';
+import type { ReactNode } from 'react';
+import { useMemo } from 'react';
 import { Alert, Table, Tooltip, Typography } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import {
   ClockCircleOutlined,
   ExperimentOutlined,
@@ -7,13 +9,16 @@ import {
   SettingOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
+import type { SimulationLine } from '../types/simulation';
 
 const { Text } = Typography;
 
 const TABLE_SCROLL = { x: 2200, y: 500 };
 const PAGE_SIZE_OPTIONS = ['10', '20', '50', '100', '500', '1000'];
 
-const eventStyles = {
+type EventStyle = [label: string, color: string, backgroundColor: string, borderColor: string];
+
+const eventStyles: Record<string, EventStyle> = {
   inicializacion: ['Inicialización', '#94a3b8', 'rgba(148, 163, 184, 0.08)', 'rgba(148, 163, 184, 0.25)'],
   inicialización: ['Inicialización', '#94a3b8', 'rgba(148, 163, 184, 0.08)', 'rgba(148, 163, 184, 0.25)'],
   inicio: ['Inicialización', '#94a3b8', 'rgba(148, 163, 184, 0.08)', 'rgba(148, 163, 184, 0.25)'],
@@ -24,13 +29,15 @@ const eventStyles = {
   maintenance_complete: ['Fin Mantenimiento', '#f97316', 'rgba(249, 115, 22, 0.08)', 'rgba(249, 115, 22, 0.25)'],
 };
 
-const pcVisuals = {
+type PcVisual = [statusText: string, ledColor: string, ledGlow: string, border: string, pulseClass: string];
+
+const pcVisuals: Record<string, PcVisual> = {
   idle: ['LIBRE', '#10b981', '0 0 6px rgba(16, 185, 129, 0.75)', 'rgba(16, 185, 129, 0.15)', ''],
   busy: ['OCUPADO', '#3b82f6', '0 0 8px rgba(59, 130, 246, 0.85), 0 0 15px rgba(59, 130, 246, 0.4)', 'rgba(59, 130, 246, 0.2)', 'led-pulse-blue'],
   maintenance: ['MANTENIMIENTO', '#f59e0b', '0 0 8px rgba(245, 158, 11, 0.85), 0 0 15px rgba(245, 158, 11, 0.4)', 'rgba(245, 158, 11, 0.25)', 'led-pulse-orange'],
 };
 
-const renderMutedMonospace = (val, isRnd = false, decimals = 4, suffix = '') => {
+const renderMutedMonospace = (val: number | string | null | undefined, isRnd = false, decimals = 4, suffix = ''): ReactNode => {
   if (val === null || val === undefined) return <span style={{ color: '#475569' }}>-</span>;
   const displayVal = typeof val === 'number' ? val.toFixed(decimals) : val;
   return (
@@ -45,7 +52,7 @@ const renderMutedMonospace = (val, isRnd = false, decimals = 4, suffix = '') => 
   );
 };
 
-const renderEvent = (evt) => {
+const renderEvent = (evt: string): ReactNode => {
   let [label, color, bgColor, borderColor] = eventStyles[evt] || [
     evt,
     '#a855f7',
@@ -78,7 +85,7 @@ const renderEvent = (evt) => {
   );
 };
 
-const renderQueueLength = (len, limit) => {
+const renderQueueLength = (len: number, limit: number): ReactNode => {
   let color = '#94a3b8';
   let bgColor = 'rgba(148, 163, 184, 0.05)';
   let border = '1px solid rgba(148, 163, 184, 0.12)';
@@ -120,7 +127,7 @@ const renderQueueLength = (len, limit) => {
   );
 };
 
-const renderPcStates = (pcStatesStr) => {
+const renderPcStates = (pcStatesStr: string | null | undefined): ReactNode => {
   if (!pcStatesStr) return null;
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', alignItems: 'center' }}>
@@ -161,7 +168,7 @@ const renderPcStates = (pcStatesStr) => {
   );
 };
 
-const createColumns = (queueLimit) => [
+const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
   {
     title: <span style={{ fontSize: '11px', color: '#64748b' }}>Fila</span>,
     dataIndex: 'line_index',
@@ -169,7 +176,7 @@ const createColumns = (queueLimit) => [
     width: 75,
     fixed: 'left',
     onHeaderCell: () => ({ className: 'header-col-general' }),
-    render: (idx) => <Text style={{ color: '#475569', fontFamily: 'monospace', fontSize: '11px' }}>{idx}</Text>
+    render: (idx: number) => <Text style={{ color: '#475569', fontFamily: 'monospace', fontSize: '11px' }}>{idx}</Text>
   },
   {
     title: <span style={{ fontSize: '11px', color: '#cbd5e1' }}><ClockCircleOutlined /> Reloj</span>,
@@ -178,7 +185,7 @@ const createColumns = (queueLimit) => [
     width: 100,
     fixed: 'left',
     onHeaderCell: () => ({ className: 'header-col-general' }),
-    render: (t) => <strong style={{ color: '#c084fc', fontFamily: 'monospace', fontSize: '11px' }}>{t}</strong>
+    render: (t: string) => <strong style={{ color: '#c084fc', fontFamily: 'monospace', fontSize: '11px' }}>{t}</strong>
   },
   {
     title: <span style={{ fontSize: '11px', color: '#cbd5e1' }}><SettingOutlined /> Evento</span>,
@@ -194,7 +201,7 @@ const createColumns = (queueLimit) => [
     key: 'queue_length',
     width: 75,
     onHeaderCell: () => ({ className: 'header-col-general' }),
-    render: (len) => renderQueueLength(len, queueLimit)
+    render: (len: number) => renderQueueLength(len, queueLimit)
   },
   {
     title: <span style={{ fontSize: '11px', color: '#c7d2fe' }}><ExperimentOutlined /> RND Lleg.</span>,
@@ -203,7 +210,7 @@ const createColumns = (queueLimit) => [
     width: 110,
     onHeaderCell: () => ({ className: 'header-col-students' }),
     onCell: () => ({ className: 'cell-col-students' }),
-    render: (val) => renderMutedMonospace(val, true, 4)
+    render: (val: number | null) => renderMutedMonospace(val, true, 4)
   },
   {
     title: <span style={{ fontSize: '11px', color: '#c7d2fe' }}>Tpo Llegada (min)</span>,
@@ -212,7 +219,7 @@ const createColumns = (queueLimit) => [
     width: 135,
     onHeaderCell: () => ({ className: 'header-col-students' }),
     onCell: () => ({ className: 'cell-col-students' }),
-    render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
+    render: (val: number | null) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
   },
   {
     title: <span style={{ fontSize: '11px', color: '#c7d2fe' }}>Próx. Llegada</span>,
@@ -221,7 +228,7 @@ const createColumns = (queueLimit) => [
     width: 115,
     onHeaderCell: () => ({ className: 'header-col-students' }),
     onCell: () => ({ className: 'cell-col-students' }),
-    render: (val) => val !== null ? <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#c084fc' }}>{new Date(val * 1000).toISOString().substr(11, 8)}</span> : renderMutedMonospace(null)
+    render: (val: number | null) => val !== null ? <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#c084fc' }}>{new Date(val * 1000).toISOString().substr(11, 8)}</span> : renderMutedMonospace(null)
   },
   {
     title: <span style={{ fontSize: '11px', color: '#c7d2fe' }}>Alumnos Rech.</span>,
@@ -230,7 +237,7 @@ const createColumns = (queueLimit) => [
     width: 110,
     onHeaderCell: () => ({ className: 'header-col-students' }),
     onCell: () => ({ className: 'cell-col-students' }),
-    render: (val) => val > 0 ? <span style={{ color: '#f87171', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '11px' }}>{val}</span> : <span style={{ color: '#475569', fontSize: '11px', fontFamily: 'monospace' }}>0</span>
+    render: (val: number) => val > 0 ? <span style={{ color: '#f87171', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '11px' }}>{val}</span> : <span style={{ color: '#475569', fontSize: '11px', fontFamily: 'monospace' }}>0</span>
   },
   {
     title: <span style={{ fontSize: '11px', color: '#a7f3d0' }}><LaptopOutlined /> Servidores (LED)</span>,
@@ -248,7 +255,7 @@ const createColumns = (queueLimit) => [
     width: 105,
     onHeaderCell: () => ({ className: 'header-col-computers' }),
     onCell: () => ({ className: 'cell-col-computers' }),
-    render: (val) => renderMutedMonospace(val, true, 4)
+    render: (val: number | null) => renderMutedMonospace(val, true, 4)
   },
   {
     title: <span style={{ fontSize: '11px', color: '#a7f3d0' }}>Tpo Insc. (min)</span>,
@@ -257,7 +264,7 @@ const createColumns = (queueLimit) => [
     width: 120,
     onHeaderCell: () => ({ className: 'header-col-computers' }),
     onCell: () => ({ className: 'cell-col-computers' }),
-    render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
+    render: (val: number | null) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
   },
   {
     title: <span style={{ fontSize: '11px', color: '#a7f3d0' }}>Insc. Comp.</span>,
@@ -266,7 +273,7 @@ const createColumns = (queueLimit) => [
     width: 110,
     onHeaderCell: () => ({ className: 'header-col-computers' }),
     onCell: () => ({ className: 'cell-col-computers' }),
-    render: (val) => <Text style={{ color: '#34d399', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '11px' }}>{val}</Text>
+    render: (val: number) => <Text style={{ color: '#34d399', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '11px' }}>{val}</Text>
   },
   {
     title: <span style={{ fontSize: '11px', color: '#fde68a' }}><ExperimentOutlined /> RND Mant.</span>,
@@ -275,7 +282,7 @@ const createColumns = (queueLimit) => [
     width: 105,
     onHeaderCell: () => ({ className: 'header-col-maintenance' }),
     onCell: () => ({ className: 'cell-col-maintenance' }),
-    render: (val) => renderMutedMonospace(val, true, 4)
+    render: (val: number | null) => renderMutedMonospace(val, true, 4)
   },
   {
     title: <span style={{ fontSize: '11px', color: '#fde68a' }}>Tpo Mant. (min)</span>,
@@ -284,7 +291,7 @@ const createColumns = (queueLimit) => [
     width: 120,
     onHeaderCell: () => ({ className: 'header-col-maintenance' }),
     onCell: () => ({ className: 'cell-col-maintenance' }),
-    render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
+    render: (val: number | null) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
   },
   {
     title: <span style={{ fontSize: '11px', color: '#fde68a' }}><ExperimentOutlined /> RND Regreso Téc.</span>,
@@ -293,7 +300,7 @@ const createColumns = (queueLimit) => [
     width: 135,
     onHeaderCell: () => ({ className: 'header-col-maintenance' }),
     onCell: () => ({ className: 'cell-col-maintenance' }),
-    render: (val) => renderMutedMonospace(val, true, 4)
+    render: (val: number | null) => renderMutedMonospace(val, true, 4)
   },
   {
     title: <span style={{ fontSize: '11px', color: '#fde68a' }}>Tpo Regreso Téc. (min)</span>,
@@ -302,9 +309,19 @@ const createColumns = (queueLimit) => [
     width: 145,
     onHeaderCell: () => ({ className: 'header-col-maintenance' }),
     onCell: () => ({ className: 'cell-col-maintenance' }),
-    render: (val) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
+    render: (val: number | null) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
   }
 ];
+
+interface StateVectorTableProps {
+  lines: SimulationLine[];
+  loading: boolean;
+  page: number;
+  pageSize: number;
+  total: number;
+  queueLimit: number;
+  onPageChange: (page: number, pageSize: number) => void;
+}
 
 const StateVectorTable = ({
   lines,
@@ -314,7 +331,7 @@ const StateVectorTable = ({
   total,
   queueLimit,
   onPageChange,
-}) => {
+}: StateVectorTableProps) => {
   const columns = useMemo(() => createColumns(queueLimit || 5), [queueLimit]);
 
   return (

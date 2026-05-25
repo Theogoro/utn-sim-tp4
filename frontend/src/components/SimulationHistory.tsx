@@ -1,24 +1,33 @@
-import React from 'react';
 import { Table, Button, Space, Card, Typography, Tag, Popconfirm, Tooltip } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import { AreaChartOutlined, DeleteOutlined, CalendarOutlined, LaptopOutlined } from '@ant-design/icons';
+import type { SimulationSummary } from '../types/simulation';
 
 const { Title, Paragraph } = Typography;
 
-const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading }) => {
+interface SimulationHistoryProps {
+  simulations: SimulationSummary[];
+  onSelect: (id: number) => void;
+  onDelete: (id: number) => void | Promise<void>;
+  activeId: number | null;
+  loading: boolean;
+}
+
+const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading }: SimulationHistoryProps) => {
   
-  const columns = [
+  const columns: ColumnsType<SimulationSummary> = [
     {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
       width: 60,
-      render: (id) => <strong style={{ color: '#818cf8' }}>#{id}</strong>
+      render: (id: number) => <strong style={{ color: '#818cf8' }}>#{id}</strong>
     },
     {
       title: 'Fecha Ejecución',
       dataIndex: 'created_at',
       key: 'created_at',
-      render: (dateStr) => {
+      render: (dateStr: string) => {
         const date = new Date(dateStr);
         return (
           <Space>
@@ -32,7 +41,7 @@ const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading 
       title: 'Duración',
       dataIndex: 'sim_hours',
       key: 'sim_hours',
-      render: (hours, record) => {
+      render: (hours: number, record) => {
         const h = hours !== undefined && hours !== null ? hours : record.sim_days * 24;
         return <Tag color="blue">{h % 1 === 0 ? h : h.toFixed(1)} h</Tag>;
       }
@@ -41,7 +50,7 @@ const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading 
       title: 'PCs',
       dataIndex: 'num_pcs',
       key: 'num_pcs',
-      render: (pcs) => (
+      render: (pcs: number) => (
         <Space>
           <LaptopOutlined style={{ color: '#a5b4fc' }} />
           <span>{pcs} PCs</span>
@@ -52,19 +61,19 @@ const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading 
       title: 'Alumnos Arribados',
       dataIndex: 'total_new_students_arrived',
       key: 'total_new_students_arrived',
-      render: (count) => count.toLocaleString()
+      render: (count: number) => count.toLocaleString()
     },
     {
       title: 'Inscripciones',
       dataIndex: 'registrations_completed',
       key: 'registrations_completed',
-      render: (count) => count.toLocaleString()
+      render: (count: number) => count.toLocaleString()
     },
     {
       title: '% Intentos Rech.',
       dataIndex: 'pct_students_returned',
       key: 'pct_students_returned',
-      render: (pct) => {
+      render: (pct: number) => {
         const color = pct === 0 ? 'green' : pct > 10 ? 'red' : 'orange';
         return <Tag color={color}>{pct.toFixed(2)}%</Tag>;
       }
@@ -73,7 +82,7 @@ const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading 
       title: 'Espera Promedio',
       dataIndex: 'avg_waiting_time',
       key: 'avg_waiting_time',
-      render: (secs) => {
+      render: (secs: number) => {
         const mins = secs / 60;
         return (
           <Tooltip title={`${secs.toFixed(1)} segundos`}>
@@ -86,7 +95,7 @@ const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading 
       title: 'Ocio Prom. Técnico',
       dataIndex: 'avg_technician_idle_time',
       key: 'avg_technician_idle_time',
-      render: (secs) => {
+      render: (secs: number) => {
         const mins = secs / 60;
         return (
           <Tooltip title={`${secs.toFixed(1)} segundos`}>

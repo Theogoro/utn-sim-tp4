@@ -1,0 +1,25 @@
+import axios from 'axios';
+import type {
+  PaginatedSimulationLines,
+  PcUtilization,
+  SimulationParams,
+  SimulationSummary,
+} from '../types/simulation';
+
+const API_URL = 'http://127.0.0.1:8000/api';
+
+export const listSimulations = () => axios.get<SimulationSummary[]>(`${API_URL}/simulations`);
+
+export const createSimulation = (params: SimulationParams) => axios.post<SimulationSummary>(`${API_URL}/simulations`, params);
+
+export const deleteSimulation = (id: number) => axios.delete(`${API_URL}/simulations/${id}`);
+
+export const getSimulation = (id: number) => axios.get<SimulationSummary>(`${API_URL}/simulations/${id}`);
+
+export const getSimulationLines = (id: number, { page, limit }: { page: number; limit: number }) => (
+  axios.get<PaginatedSimulationLines>(`${API_URL}/simulations/${id}/lines`, {
+    params: { page, limit },
+  })
+);
+
+export const getSimulationPcStats = (id: number) => axios.get<PcUtilization[]>(`${API_URL}/simulations/${id}/pc_stats`);

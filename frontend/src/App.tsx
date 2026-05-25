@@ -1,80 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { Layout, Typography, Space, message, ConfigProvider, theme, Tag } from 'antd';
+import { Layout, Typography, Space, ConfigProvider, theme, Tag } from 'antd';
 import { ExperimentOutlined } from '@ant-design/icons';
 
 import SimulationForm from './components/SimulationForm';
 import SimulationHistory from './components/SimulationHistory';
 import SimulationDetails from './components/SimulationDetails';
-import { createSimulation, deleteSimulation, listSimulations } from './api/simulations';
+import { useSimulationHistory } from './hooks/useSimulationHistory';
 
 const { Header, Content, Footer } = Layout;
 const { Title, Text } = Typography;
 
 const App = () => {
-  const [simulations, setSimulations] = useState([]);
-  const [activeSimulationId, setActiveSimulationId] = useState(null);
-  const [loadingList, setLoadingList] = useState(false);
-  const [loadingSubmit, setLoadingSubmit] = useState(false);
-
-  useEffect(() => {
-    fetchSimulations();
-  }, []);
-
-  const fetchSimulations = async () => {
-    setLoadingList(true);
-    try {
-      const res = await listSimulations();
-      setSimulations(res.data);
-      
-      // Auto-select the latest simulation if none selected and simulations exist
-      if (res.data.length > 0 && !activeSimulationId) {
-        setActiveSimulationId(res.data[0].id);
-      }
-    } catch (err) {
-      console.error(err);
-      message.error("Error al cargar el historial de simulaciones.");
-    } finally {
-      setLoadingList(false);
-    }
-  };
-
-  const handleRunSimulation = async (params) => {
-    setLoadingSubmit(true);
-    const key = 'simulating';
-    message.loading({ content: 'Ejecutando Simulación de Eventos Discretos (FEL)... esto puede tardar un momento...', key, duration: 0 });
-    try {
-      const res = await createSimulation(params);
-      message.success({ content: `¡Simulación #${res.data.id} completada y registrada con éxito!`, key, duration: 4 });
-      
-      // Update list
-      setSimulations(prev => [res.data, ...prev]);
-      // Select the new simulation details
-      setActiveSimulationId(res.data.id);
-    } catch (err) {
-      console.error(err);
-      message.error({ content: 'La simulación falló. Verifique los parámetros e intente nuevamente.', key, duration: 4 });
-    } finally {
-      setLoadingSubmit(false);
-    }
-  };
-
-  const handleDeleteSimulation = async (id) => {
-    try {
-      await deleteSimulation(id);
-      message.success("Simulación eliminada correctamente.");
-      
-      // Remove from state
-      setSimulations(prev => prev.filter(sim => sim.id !== id));
-      
-      // If deleted active selection, clear or auto-select another
-      if (activeSimulationId === id) {
-        setActiveSimulationId(null);
-      }
-    } catch (err) {
-      console.error(err);
-      message.error("Error al eliminar la simulación.");
-    }
-  };
+  const {
+    simulations,
+    activeSimulationId,
+    loadingList,
+    loadingSubmit,
+    setActiveSimulationId,
+    runSimulation,
+    removeSimulation,
+  } = useSimulationHistory();
 
   return (
     <ConfigProvider
@@ -121,12 +65,12 @@ const App = () => {
 
         {/* Content Wrapper */}
         <Content style={{ padding: '32px 24px', maxWidth: 1400, width: '100%', margin: '0 auto' }}>
-          <SimulationForm onSubmit={handleRunSimulation} loading={loadingSubmit} />
+          <SimulationForm onSubmit={runSimulation} loading={loadingSubmit} />
           
           <SimulationHistory 
             simulations={simulations} 
             onSelect={setActiveSimulationId} 
-            onDelete={handleDeleteSimulation}
+            onDelete={removeSimulation}
             activeId={activeSimulationId}
             loading={loadingList}
           />
