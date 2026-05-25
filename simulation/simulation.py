@@ -23,6 +23,15 @@ class Simulation:
     self.maintenance_complete_handler: MaintenanceCompleteHandler = MaintenanceCompleteHandler(self.state)
     self.student_return_handler: StudentReturnHandler = StudentReturnHandler(self.state)
 
+    # Configurar diccionario de despacho de manejadores de eventos internos (evita estructura if/elif)
+    self.event_handlers = {
+        'student_arrival': self.student_arrival_handler,
+        'registration_complete': self.registration_complete_handler,
+        'technician_arrival': self.technician_arrival_handler,
+        'maintenance_complete': self.maintenance_complete_handler,
+        'student_return': self.student_return_handler
+    }
+
     # Inicializar observadores externos (responsables del reporte, base de datos, logs, etc.)
     self.handlers = []
     if handlers:
@@ -52,18 +61,24 @@ class Simulation:
         self.state.current_time = next_time
         self.state.event = f"{event_type}_{pc_index}" if pc_index is not None else event_type
         
-        # Disparar el manejador de evento interno correspondiente (lógica de negocio)
-        if event_type == 'student_arrival':
-            self.student_arrival_handler.trigger()
-        elif event_type == 'registration_complete':
-            assert pc_index is not None
-            self.registration_complete_handler.trigger(pc_index)
-        elif event_type == 'technician_arrival':
-            self.technician_arrival_handler.trigger()
-        elif event_type == 'maintenance_complete':
-            self.maintenance_complete_handler.trigger()
-        elif event_type == 'student_return':
-            self.student_return_handler.trigger()
+        # Resetear variables de RND y duración temporales al inicio de la fila
+        self.state.student_rnd = None
+        self.state.student_arrival_time = None
+        self.state.registration_rnd = None
+        self.state.registration_time = None
+        self.state.maintenance_rnd = None
+        self.state.maintenance_time = None
+        self.state.technician_return_rnd = None
+        self.state.technician_return_time = None
+        
+        # Obtener y disparar el manejador de evento interno usando el diccionario de despacho
+        handler = self.event_handlers.get(event_type)
+        if handler:
+            if event_type == 'registration_complete':
+                assert pc_index is not None
+                handler.trigger(pc_index)
+            else:
+                handler.trigger()
             
         # Disparar observadores externos (loggers) al finalizar el procesamiento del evento
         for handler in self.handlers:

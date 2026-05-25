@@ -30,15 +30,21 @@ class StudentArrivalHandler(SimulationHandler):
                 # Ocupar el equipo de inmediato
                 pc = state.servers[free_pc_index]
                 pc.change_state('busy', state.current_time)
-                enrollment_time = uniform(params.min_enrollment, params.max_enrollment)
+                
+                # Generar RND e intervalo uniforme para Inscripción
+                rnd_reg, enrollment_time = uniform(params.min_enrollment, params.max_enrollment)
+                state.registration_rnd = rnd_reg
+                state.registration_time = enrollment_time
                 state.next_registration_complete[free_pc_index] = state.current_time + enrollment_time
             else:
                 # Entrar a la cola
                 state.queue.append(state.current_time)
         
         # 3. Planificar el próximo arribo exponencial
-        arrival_interval = exponential(params.mean_arrival_time)
-        state.next_student_arrival = state.current_time + arrival_interval
+        rnd_arr, arrival_interval = exponential(params.mean_arrival_time)
+        state.student_rnd = rnd_arr
+        state.student_arrival_time = arrival_interval
+        state.student_next_arrival_time = state.next_student_arrival = state.current_time + arrival_interval
 
 
 class RegistrationCompleteHandler(SimulationHandler):
@@ -65,7 +71,10 @@ class RegistrationCompleteHandler(SimulationHandler):
             state.technician_current_pc = pc_index
             pc.change_state('maintenance', state.current_time)
             
-            maint_duration = uniform(params.min_maintenance_time, params.max_maintenance_time)
+            # Generar RND y duración uniforme para Mantenimiento
+            rnd_maint, maint_duration = uniform(params.min_maintenance_time, params.max_maintenance_time)
+            state.maintenance_rnd = rnd_maint
+            state.maintenance_time = maint_duration
             state.next_maintenance_complete = state.current_time + maint_duration
             
         # 3. Si el técnico no la toma, ver si hay alumnos esperando en cola
@@ -77,7 +86,11 @@ class RegistrationCompleteHandler(SimulationHandler):
             state.stats.total_waiting_time += wait_time
             
             pc.change_state('busy', state.current_time)
-            enrollment_time = uniform(params.min_enrollment, params.max_enrollment)
+            
+            # Generar RND e intervalo uniforme para Inscripción
+            rnd_reg, enrollment_time = uniform(params.min_enrollment, params.max_enrollment)
+            state.registration_rnd = rnd_reg
+            state.registration_time = enrollment_time
             state.next_registration_complete[pc_index] = state.current_time + enrollment_time
 
 
@@ -107,7 +120,10 @@ class TechnicianArrivalHandler(SimulationHandler):
             state.technician_current_pc = free_pc_index
             state.servers[free_pc_index].change_state('maintenance', state.current_time)
             
-            maint_duration = uniform(params.min_maintenance_time, params.max_maintenance_time)
+            # Generar RND y duración uniforme para Mantenimiento
+            rnd_maint, maint_duration = uniform(params.min_maintenance_time, params.max_maintenance_time)
+            state.maintenance_rnd = rnd_maint
+            state.maintenance_time = maint_duration
             state.next_maintenance_complete = state.current_time + maint_duration
         else:
             # Todas las PCs están ocupadas con alumnos, el técnico debe esperar
@@ -140,7 +156,11 @@ class MaintenanceCompleteHandler(SimulationHandler):
             state.stats.total_waiting_time += wait_time
             
             pc.change_state('busy', state.current_time)
-            enrollment_time = uniform(params.min_enrollment, params.max_enrollment)
+            
+            # Generar RND e intervalo uniforme para Inscripción
+            rnd_reg, enrollment_time = uniform(params.min_enrollment, params.max_enrollment)
+            state.registration_rnd = rnd_reg
+            state.registration_time = enrollment_time
             state.next_registration_complete[pc_index] = state.current_time + enrollment_time
             
         # 2. Buscar la siguiente máquina sin mantener en esta visita
@@ -156,11 +176,14 @@ class MaintenanceCompleteHandler(SimulationHandler):
             state.stats.total_technician_idle_time += state.technician_visit_idle_accumulated
             
             state.technician_state = 'absent'
-            # Programar próximo regreso (1 hora ± 3')
-            return_interval = uniform(
+            
+            # Generar RND e intervalo uniforme para Regreso del Técnico (1 hora ± 3')
+            rnd_ret, return_interval = uniform(
                 params.mean_technician_return_time - params.technician_return_time_variation,
                 params.mean_technician_return_time + params.technician_return_time_variation
             )
+            state.technician_return_rnd = rnd_ret
+            state.technician_return_time = return_interval
             state.next_technician_arrival = state.current_time + return_interval
         else:
             # Aún quedan PCs. ¿Hay alguna libre en este momento?
@@ -176,7 +199,10 @@ class MaintenanceCompleteHandler(SimulationHandler):
                 state.technician_current_pc = free_pc_index
                 state.servers[free_pc_index].change_state('maintenance', state.current_time)
                 
-                maint_duration = uniform(params.min_maintenance_time, params.max_maintenance_time)
+                # Generar RND y duración uniforme para Mantenimiento
+                rnd_maint, maint_duration = uniform(params.min_maintenance_time, params.max_maintenance_time)
+                state.maintenance_rnd = rnd_maint
+                state.maintenance_time = maint_duration
                 state.next_maintenance_complete = state.current_time + maint_duration
             else:
                 # Todas las restantes a mantener están ocupadas, esperar
@@ -216,7 +242,11 @@ class StudentReturnHandler(SimulationHandler):
                 # Ocupar PC inmediatamente
                 pc = state.servers[free_pc_index]
                 pc.change_state('busy', state.current_time)
-                enrollment_time = uniform(params.min_enrollment, params.max_enrollment)
+                
+                # Generar RND e intervalo uniforme para Inscripción
+                rnd_reg, enrollment_time = uniform(params.min_enrollment, params.max_enrollment)
+                state.registration_rnd = rnd_reg
+                state.registration_time = enrollment_time
                 state.next_registration_complete[free_pc_index] = state.current_time + enrollment_time
             else:
                 # Hacer cola

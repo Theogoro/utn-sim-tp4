@@ -75,25 +75,36 @@ class SimulationState:
         self.next_registration_complete = [None] * num_servers
         self.student_returns = []
 
-        # Variables temporales para auditoría y compatibilidad
+        # Variables de Auditoría Matemática y RNDs de la Fila Actual (Tabla)
         self.student_rnd = None
         self.student_arrival_time = None
         self.student_next_arrival_time = None
+        
+        self.registration_rnd = None
+        self.registration_time = None
+        
         self.maintenance_rnd = None
         self.maintenance_time = None
-        self.maintenance_next_time = None
+        
+        self.technician_return_rnd = None
+        self.technician_return_time = None
 
     def initialize_events(self, params):
         """Programa los eventos iniciales para arrancar la simulación."""
-        # Primer arribo de alumno (exponencial con media 2' = 120s)
-        self.next_student_arrival = exponential(params.mean_arrival_time)
-        self.student_next_arrival_time = self.next_student_arrival  # Mantener compatibilidad si es necesario
+        # 1. Primer arribo de alumno (exponencial con media 2' = 120s)
+        rnd, tpo = exponential(params.mean_arrival_time)
+        self.student_rnd = rnd
+        self.student_arrival_time = tpo
+        self.next_student_arrival = self.student_next_arrival_time = self.current_time + tpo
         
-        # Primer arribo del técnico (1 hora ± 3' = 3600s ± 180s)
-        self.next_technician_arrival = uniform(
+        # 2. Primer arribo del técnico (1 hora ± 3' = 3600s ± 180s)
+        rnd_tech, tpo_tech = uniform(
             params.mean_technician_return_time - params.technician_return_time_variation,
             params.mean_technician_return_time + params.technician_return_time_variation
         )
+        self.technician_return_rnd = rnd_tech
+        self.technician_return_time = tpo_tech
+        self.next_technician_arrival = self.current_time + tpo_tech
 
     def get_next_event(self):
         """Busca y retorna el próximo evento programado en la FEL."""
@@ -113,13 +124,11 @@ class SimulationState:
                 candidates.append((t, 'registration_complete', i))
                 
         if self.student_returns:
-            # Los retornos están ordenados, el primero de la lista es el más próximo
             candidates.append((self.student_returns[0], 'student_return', None))
             
         if not candidates:
             return None, None, None
             
-        # Retornamos el evento con el menor tiempo programado
         next_time, event_type, pc_index = min(candidates, key=lambda x: x[0])
         return next_time, event_type, pc_index
 
