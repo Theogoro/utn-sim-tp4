@@ -1,4 +1,16 @@
+from collections import deque
+
 from utils.random_generator import uniform, exponential
+
+
+EVENT_PRIORITIES = {
+    # Finished work releases capacity before new external demand at the same clock tick.
+    'maintenance_complete': 0,
+    'registration_complete': 0,
+    'technician_arrival': 1,
+    'student_arrival': 3,
+    'student_return': 3,
+}
 
 class ServerState:
     def __init__(self, server_id: int):
@@ -28,7 +40,7 @@ class SimulationStats:
         # Estadísticas de Alumnos
         self.total_students_arrived = 0      # Total de intentos de arribo (incluyendo retornos)
         self.total_new_students_arrived = 0  # Total de alumnos nuevos del flujo exponencial
-        self.total_students_returned = 0     # Alumnos que se retiraron porque la cola superaba las 5 personas
+        self.total_students_returned = 0     # Intentos de alumnos que se retiraron porque la cola estaba llena
         self.students_queued_and_waited = 0  # Alumnos que entraron en cola y esperaron un tiempo > 0
         self.total_waiting_time = 0.0        # Sumatoria del tiempo de espera de alumnos que hicieron cola
 
@@ -58,7 +70,7 @@ class SimulationState:
         self.servers = [ServerState(i + 1) for i in range(num_servers)]
         
         # Cola de alumnos: almacena los tiempos de llegada de los alumnos en espera (FIFO)
-        self.queue = []
+        self.queue = deque()
         
         # Estado del Técnico de Sistemas
         self.technician_state = 'absent'  # 'absent', 'working', 'waiting'
@@ -113,20 +125,20 @@ class SimulationState:
         candidates = []
         
         if self.next_student_arrival is not None:
-            candidates.append((self.next_student_arrival, 3, 'student_arrival', None))
+            candidates.append((self.next_student_arrival, EVENT_PRIORITIES['student_arrival'], 'student_arrival', None))
             
         if self.next_technician_arrival is not None:
-            candidates.append((self.next_technician_arrival, 1, 'technician_arrival', None))
+            candidates.append((self.next_technician_arrival, EVENT_PRIORITIES['technician_arrival'], 'technician_arrival', None))
             
         if self.next_maintenance_complete is not None:
-            candidates.append((self.next_maintenance_complete, 0, 'maintenance_complete', None))
+            candidates.append((self.next_maintenance_complete, EVENT_PRIORITIES['maintenance_complete'], 'maintenance_complete', None))
             
         for i, t in enumerate(self.next_registration_complete):
             if t is not None:
-                candidates.append((t, 0, 'registration_complete', i))
+                candidates.append((t, EVENT_PRIORITIES['registration_complete'], 'registration_complete', i))
                 
         if self.student_returns:
-            candidates.append((self.student_returns[0], 3, 'student_return', None))
+            candidates.append((self.student_returns[0], EVENT_PRIORITIES['student_return'], 'student_return', None))
             
         if not candidates:
             return None, None, None

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from datetime import datetime
 from typing import List, Optional
 
@@ -16,6 +16,18 @@ class SimulationParamsCreate(BaseModel):
     student_wait_threshold: int = Field(default=5, ge=0, description="Max students waiting in queue before turning back")
     student_return_time: float = Field(default=30.0, ge=0.1, description="Return time for turned-back students (minutes)")
     sim_hours: float = Field(default=24.0, ge=0.1, le=720.0, description="Duration of simulation in hours")
+
+    @model_validator(mode="after")
+    def validate_ranges(self):
+        if self.min_enrollment > self.max_enrollment:
+            raise ValueError("min_enrollment must be less than or equal to max_enrollment")
+        if self.min_service_time > self.max_service_time:
+            raise ValueError("min_service_time must be less than or equal to max_service_time")
+        if self.min_maintenance_time > self.max_maintenance_time:
+            raise ValueError("min_maintenance_time must be less than or equal to max_maintenance_time")
+        if self.technician_return_time_variation > self.mean_technician_return_time:
+            raise ValueError("technician_return_time_variation must not exceed mean_technician_return_time")
+        return self
 
 
 class SimulationLineResponse(BaseModel):

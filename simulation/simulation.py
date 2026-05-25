@@ -89,13 +89,16 @@ class Simulation:
         for handler in self.handlers:
             handler.trigger()
             
-    # 3. Finalización: acumular tiempos en el estado final para precisión métrica
+    # 3. Finalización: acumular tiempos hasta el horizonte pedido, no solo hasta el ultimo evento.
+    final_time = max_time
     for pc in self.state.servers:
-        pc.change_state('idle', self.state.current_time)
+        pc.change_state('idle', final_time)
         
     # Acumular el ocio del técnico si cortamos la simulación a mitad de una espera
     if self.state.technician_state == 'waiting':
-        idle_duration = self.state.current_time - self.state.technician_visit_idle_start
+        idle_duration = final_time - self.state.technician_visit_idle_start
         self.state.technician_visit_idle_accumulated += idle_duration
-        
+
+    self.state.current_time = final_time
+
     return self.state
