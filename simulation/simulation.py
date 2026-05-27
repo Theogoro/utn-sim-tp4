@@ -1,104 +1,143 @@
+import heapq
 from typing import List, Optional
+
 from simulation.params import SimulationParams
-from simulation.state import SimulationState
+from simulation.state import SimulationState, Event
 from simulation.handlers.event_handlers import (
-    StudentArrivalHandler,
-    RegistrationCompleteHandler,
-    TechnicianArrivalHandler,
-    MaintenanceCompleteHandler,
-    StudentReturnHandler
+    admit_or_defer_student,
+    dequeue_and_start_enrollment,
+    find_unmaintained_pc,
+    schedule_maintenance,
+    schedule_technician_return,
+    technician_take_pc_or_wait,
 )
+from utils.random_generator import exponential
 
 
 class Simulation:
-  def __init__(self, params: SimulationParams, handlers: Optional[List] = None) -> None:
-    self.params: SimulationParams = params
-    self.state: SimulationState = self.create_initial_state()
-    self.state.params = params  # Vincular parámetros directamente al estado para los handlers
-    
-    # Inicializar manejadores de eventos internos (responsables de la lógica y mutación de estado)
-    self.student_arrival_handler: StudentArrivalHandler = StudentArrivalHandler(self.state)
-    self.registration_complete_handler: RegistrationCompleteHandler = RegistrationCompleteHandler(self.state)
-    self.technician_arrival_handler: TechnicianArrivalHandler = TechnicianArrivalHandler(self.state)
-    self.maintenance_complete_handler: MaintenanceCompleteHandler = MaintenanceCompleteHandler(self.state)
-    self.student_return_handler: StudentReturnHandler = StudentReturnHandler(self.state)
+    def __init__(self, params: SimulationParams, handlers: Optional[List] = None) -> None:
+        self.params = params
+        self.state = SimulationState(params.num_pcs)
+        self.state.params = params  # Los helpers acceden a parámetros vía state.params.
 
-    # Configurar diccionario de despacho de manejadores de eventos internos (evita estructura if/elif)
-    self.event_handlers = {
-        'student_arrival': self.student_arrival_handler,
-        'registration_complete': self.registration_complete_handler,
-        'technician_arrival': self.technician_arrival_handler,
-        'maintenance_complete': self.maintenance_complete_handler,
-        'student_return': self.student_return_handler
-    }
+        # Dispatch table de eventos internos. Agregar evento = un método + entrada acá.
+        self._event_handlers = {
+            'student_arrival': self._handle_student_arrival,
+            'registration_complete': self._handle_registration_complete,
+            'technician_arrival': self._handle_technician_arrival,
+            'maintenance_complete': self._handle_maintenance_complete,
+            'student_return': self._handle_student_return,
+        }
 
-    # Inicializar observadores externos (responsables del reporte, base de datos, logs, etc.)
-    self.handlers = []
-    if handlers:
-        for handler in handlers:
-            if isinstance(handler, type):  # Es una clase de handler, la instanciamos con el estado
-                self.handlers.append(handler(self.state))
-            else:  # Ya es una instancia configurada
-                self.handlers.append(handler)
+        # Observadores externos (loggers, persistencia). Aceptan clase o instancia.
+        self.handlers = []
+        if handlers:
+            for h in handlers:
+                self.handlers.append(h(self.state) if isinstance(h, type) else h)
 
-  def create_initial_state(self) -> SimulationState:
-    return SimulationState(self.params.num_pcs)
-  
-  def run(self, max_time: float) -> SimulationState:
-    """Ejecuta el bucle principal de la simulación por pasos de eventos."""
-    # 1. Programar eventos iniciales (primer alumno y primer técnico)
-    self.state.event = 'inicialización'
-    self.state.initialize_events(self.params)
-    
-    # Registrar el estado inicial (Fila 0) en los observadores (loggers)
-    for handler in self.handlers:
-        handler.trigger()
-    
-    # 2. Bucle principal de eventos
-    while self.state.current_time < max_time:
-        # Buscar el próximo evento de la FEL y su tiempo
-        next_time, event_type, pc_index = self.state.get_next_event()
-        
-        if next_time is None or next_time > max_time:
-            break
-            
-        # Avanzar el reloj al instante del próximo evento
-        self.state.current_time = next_time
-        self.state.event = f"{event_type}_pc{pc_index + 1}" if pc_index is not None else event_type
-        
-        # Resetear variables de RND y duración temporales al inicio de la fila
-        self.state.student_rnd = None
-        self.state.student_arrival_time = None
-        self.state.registration_rnd = None
-        self.state.registration_time = None
-        self.state.maintenance_rnd = None
-        self.state.maintenance_time = None
-        self.state.technician_return_rnd = None
-        self.state.technician_return_time = None
-        
-        # Obtener y disparar el manejador de evento interno usando el diccionario de despacho
-        handler = self.event_handlers.get(event_type)
-        if handler:
-            if event_type == 'registration_complete':
-                assert pc_index is not None
-                handler.trigger(pc_index)
-            else:
-                handler.trigger()
-            
-        # Disparar observadores externos (loggers) al finalizar el procesamiento del evento
-        for handler in self.handlers:
-            handler.trigger()
-            
-    # 3. Finalización: acumular tiempos hasta el horizonte pedido, no solo hasta el ultimo evento.
-    final_time = max_time
-    for pc in self.state.servers:
-        pc.change_state('idle', final_time)
-        
-    # Acumular el ocio del técnico si cortamos la simulación a mitad de una espera
-    if self.state.technician_state == 'waiting':
-        idle_duration = final_time - self.state.technician_visit_idle_start
-        self.state.technician_visit_idle_accumulated += idle_duration
+    def run(self, max_time: float) -> SimulationState:
+        """Ejecuta el bucle de eventos hasta max_time."""
+        # 1. Programar eventos iniciales y emitir la fila 0.
+        self.state.event = 'inicialización'
+        self.state.fresh_row()
+        self.state.initialize_events(self.params)
+        self._notify_observers(event=None)
 
-    self.state.current_time = final_time
+        # 2. Bucle principal.
+        while self.state.current_time < max_time:
+            event = self.state.get_next_event()
+            if event is None or event.time > max_time:
+                break
 
-    return self.state
+            self.state.current_time = event.time
+            self.state.event = (
+                f"{event.type}_pc{event.pc_index + 1}" if event.pc_index is not None else event.type
+            )
+            self.state.fresh_row()
+
+            self._event_handlers[event.type](event)
+            self._notify_observers(event)
+
+        # 3. Finalización: acumular tiempos hasta el horizonte pedido.
+        for pc in self.state.servers:
+            pc.change_state('idle', max_time)
+
+        if self.state.technician_state == 'waiting':
+            self.state.technician_visit_idle_accumulated += max_time - self.state.technician_visit_idle_start
+
+        self.state.current_time = max_time
+        return self.state
+
+    def _notify_observers(self, event: Optional[Event]) -> None:
+        for h in self.handlers:
+            h.trigger(event)
+
+    # ----- Event handlers -----
+
+    def _handle_student_arrival(self, event: Event) -> None:
+        state = self.state
+        state.stats.total_students_arrived += 1
+        state.stats.total_new_students_arrived += 1
+
+        # El flujo externo de alumnos sigue aunque éste se vaya y vuelva más tarde.
+        rnd, interval = exponential(state.params.mean_arrival_time)
+        state.row.student_rnd = rnd
+        state.row.student_arrival_time = interval
+        state.next_student_arrival = state.current_time + interval
+
+        admit_or_defer_student(state)
+
+    def _handle_registration_complete(self, event: Event) -> None:
+        state = self.state
+        pc_index = event.pc_index
+        assert pc_index is not None
+        pc = state.servers[pc_index]
+
+        pc.change_state('idle', state.current_time)
+        state.next_registration_complete[pc_index] = None
+        state.stats.registrations_completed += 1
+
+        # Prioridad: si el técnico estaba esperando por esta PC, la toma.
+        if state.technician_state == 'waiting' and not state.technician_pcs_maintained[pc_index]:
+            state.technician_visit_idle_accumulated += state.current_time - state.technician_visit_idle_start
+            schedule_maintenance(state, pc_index)
+        elif len(state.queue) > 0:
+            dequeue_and_start_enrollment(state, pc_index)
+
+    def _handle_technician_arrival(self, event: Event) -> None:
+        state = self.state
+        state.technician_pcs_maintained = [False] * len(state.servers)
+        state.technician_visit_idle_accumulated = 0.0
+        state.next_technician_arrival = None  # Está físicamente en la sala.
+
+        technician_take_pc_or_wait(state)
+
+    def _handle_maintenance_complete(self, event: Event) -> None:
+        state = self.state
+        pc_index = state.technician_current_pc
+        assert pc_index is not None
+
+        state.technician_pcs_maintained[pc_index] = True
+        state.servers[pc_index].change_state('idle', state.current_time)
+        state.next_maintenance_complete = None
+        state.technician_current_pc = None
+
+        # PC recién liberada: si había alumnos en cola, el primero la toma.
+        if len(state.queue) > 0:
+            dequeue_and_start_enrollment(state, pc_index)
+
+        # ¿Quedan PCs sin mantener?
+        if find_unmaintained_pc(state) is None:
+            # Visita completada.
+            state.stats.total_technician_visits += 1
+            state.stats.total_technician_idle_time += state.technician_visit_idle_accumulated
+            state.technician_state = 'absent'
+            schedule_technician_return(state)
+        else:
+            technician_take_pc_or_wait(state)
+
+    def _handle_student_return(self, event: Event) -> None:
+        state = self.state
+        heapq.heappop(state.student_returns)
+        state.stats.total_students_arrived += 1
+        admit_or_defer_student(state)
