@@ -1,9 +1,16 @@
-import { Table, Button, Space, Card, Typography, Tag, Popconfirm, Tooltip } from 'antd';
+import { useMemo } from 'react';
+import { Table, Button, Space, Card, Tag, Popconfirm, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { AreaChartOutlined, DeleteOutlined, CalendarOutlined, LaptopOutlined } from '@ant-design/icons';
+import {
+  AreaChartOutlined,
+  DeleteOutlined,
+  CalendarOutlined,
+  LaptopOutlined,
+  DatabaseOutlined,
+  CheckCircleOutlined,
+  UserDeleteOutlined,
+} from '@ant-design/icons';
 import type { SimulationSummary } from '../types/simulation';
-
-const { Title, Paragraph } = Typography;
 
 interface SimulationHistoryProps {
   simulations: SimulationSummary[];
@@ -14,28 +21,41 @@ interface SimulationHistoryProps {
 }
 
 const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading }: SimulationHistoryProps) => {
-  
+  const summary = useMemo(() => {
+    if (!simulations.length) {
+      return { runs: 0, totalRegs: 0, avgRejected: 0, avgWait: 0 };
+    }
+    const totalRegs = simulations.reduce((a, s) => a + (s.registrations_completed || 0), 0);
+    const avgRejected = simulations.reduce((a, s) => a + (s.pct_students_returned || 0), 0) / simulations.length;
+    const avgWait = simulations.reduce((a, s) => a + (s.avg_waiting_time || 0), 0) / simulations.length / 60;
+    return { runs: simulations.length, totalRegs, avgRejected, avgWait };
+  }, [simulations]);
+
   const columns: ColumnsType<SimulationSummary> = [
     {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
-      width: 60,
-      render: (id: number) => <strong style={{ color: '#818cf8' }}>#{id}</strong>
+      width: 70,
+      render: (id: number) => (
+        <span style={{ color: '#818cf8', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>#{id}</span>
+      ),
     },
     {
-      title: 'Fecha Ejecución',
+      title: 'Fecha',
       dataIndex: 'created_at',
       key: 'created_at',
       render: (dateStr: string) => {
         const date = new Date(dateStr);
         return (
-          <Space>
+          <Space size={6}>
             <CalendarOutlined style={{ color: '#64748b' }} />
-            <span>{date.toLocaleDateString()} {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            <span style={{ color: '#cbd5e1' }}>
+              {date.toLocaleDateString()} {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
           </Space>
         );
-      }
+      },
     },
     {
       title: 'Duración',
@@ -43,118 +63,150 @@ const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading 
       key: 'sim_hours',
       render: (hours: number, record) => {
         const h = hours !== undefined && hours !== null ? hours : record.sim_days * 24;
-        return <Tag color="blue">{h % 1 === 0 ? h : h.toFixed(1)} h</Tag>;
-      }
+        return <Tag color="blue" style={{ margin: 0 }}>{h % 1 === 0 ? h : h.toFixed(1)} h</Tag>;
+      },
     },
     {
       title: 'PCs',
       dataIndex: 'num_pcs',
       key: 'num_pcs',
       render: (pcs: number) => (
-        <Space>
+        <Space size={6}>
           <LaptopOutlined style={{ color: '#a5b4fc' }} />
-          <span>{pcs} PCs</span>
+          <span>{pcs}</span>
         </Space>
-      )
+      ),
     },
     {
-      title: 'Alumnos Arribados',
+      title: 'Arribados',
       dataIndex: 'total_new_students_arrived',
       key: 'total_new_students_arrived',
-      render: (count: number) => count.toLocaleString()
+      render: (count: number) => <span className="mono" style={{ color: '#e2e8f0' }}>{count.toLocaleString()}</span>,
     },
     {
       title: 'Inscripciones',
       dataIndex: 'registrations_completed',
       key: 'registrations_completed',
-      render: (count: number) => count.toLocaleString()
+      render: (count: number) => (
+        <span className="mono" style={{ color: '#34d399', fontWeight: 600 }}>{count.toLocaleString()}</span>
+      ),
     },
     {
-      title: '% Intentos Rech.',
+      title: '% Rech.',
       dataIndex: 'pct_students_returned',
       key: 'pct_students_returned',
       render: (pct: number) => {
         const color = pct === 0 ? 'green' : pct > 10 ? 'red' : 'orange';
-        return <Tag color={color}>{pct.toFixed(2)}%</Tag>;
-      }
+        return <Tag color={color} style={{ margin: 0 }}>{pct.toFixed(2)}%</Tag>;
+      },
     },
     {
-      title: 'Espera Promedio',
+      title: 'Espera prom.',
       dataIndex: 'avg_waiting_time',
       key: 'avg_waiting_time',
-      render: (secs: number) => {
-        const mins = secs / 60;
-        return (
-          <Tooltip title={`${secs.toFixed(1)} segundos`}>
-            <strong>{mins.toFixed(2)} min</strong>
-          </Tooltip>
-        );
-      }
+      render: (secs: number) => (
+        <Tooltip title={`${secs.toFixed(1)} segundos`}>
+          <span className="mono" style={{ color: '#f1f5f9', fontWeight: 600 }}>{(secs / 60).toFixed(2)} min</span>
+        </Tooltip>
+      ),
     },
     {
-      title: 'Ocio Prom. Técnico',
+      title: 'Ocio téc.',
       dataIndex: 'avg_technician_idle_time',
       key: 'avg_technician_idle_time',
-      render: (secs: number) => {
-        const mins = secs / 60;
-        return (
-          <Tooltip title={`${secs.toFixed(1)} segundos`}>
-            <span>{mins.toFixed(2)} min</span>
-          </Tooltip>
-        );
-      }
+      render: (secs: number) => (
+        <Tooltip title={`${secs.toFixed(1)} segundos`}>
+          <span className="mono" style={{ color: '#cbd5e1' }}>{(secs / 60).toFixed(2)} min</span>
+        </Tooltip>
+      ),
     },
     {
-      title: 'Acciones',
+      title: '',
       key: 'actions',
       width: 150,
+      align: 'right',
       render: (_, record) => (
-        <Space size="middle">
-          <Button 
+        <Space size={6}>
+          <Button
             type={activeId === record.id ? 'primary' : 'default'}
             icon={<AreaChartOutlined />}
             onClick={() => onSelect(record.id)}
-            style={activeId !== record.id ? { background: 'rgba(255,255,255,0.05)', color: '#f8fafc', borderColor: 'rgba(255,255,255,0.1)' } : {}}
+            size="small"
+            style={
+              activeId !== record.id
+                ? { background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', borderColor: 'rgba(148,163,184,0.15)' }
+                : {}
+            }
           >
-            Detalles
+            {activeId === record.id ? 'Activa' : 'Detalles'}
           </Button>
           <Popconfirm
             title="¿Eliminar esta simulación?"
-            description="Todos los vectores de estado y datos detallados serán eliminados permanentemente."
+            description="Se borrarán también los vectores de estado y datos detallados."
             onConfirm={() => onDelete(record.id)}
             okText="Sí, eliminar"
             cancelText="Cancelar"
             okButtonProps={{ danger: true }}
           >
-            <Button 
-              danger 
-              type="text" 
-              icon={<DeleteOutlined />} 
-            />
+            <Button danger type="text" icon={<DeleteOutlined />} size="small" />
           </Popconfirm>
         </Space>
-      )
-    }
+      ),
+    },
   ];
 
   return (
     <Card className="glass-panel" style={{ marginBottom: 24 }}>
-      <Title level={3} style={{ margin: 0, color: '#f8fafc', marginBottom: 8 }} className="gradient-title">
-        Historial de Simulaciones
-      </Title>
-      <Paragraph style={{ color: '#94a3b8', marginBottom: 24 }}>
-        Lista de ejecuciones realizadas. Haga clic en 'Detalles' para analizar la traza, gráficos de utilización y vectores de estado.
-      </Paragraph>
+      <div className="section-heading">
+        <DatabaseOutlined /> Historial
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12, marginBottom: 18 }}>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 600, color: '#f1f5f9', letterSpacing: '-0.01em' }}>
+            Simulaciones realizadas
+          </div>
+          <div style={{ color: '#94a3b8', fontSize: 13, marginTop: 4 }}>
+            Compare corridas y abra el análisis detallado de cualquier ejecución.
+          </div>
+        </div>
+      </div>
+
+      <div className="stat-strip">
+        <div className="stat">
+          <div className="stat-label">Corridas</div>
+          <div className="stat-value">{summary.runs}</div>
+        </div>
+        <div className="stat">
+          <div className="stat-label"><CheckCircleOutlined style={{ color: '#34d399', marginRight: 6 }} />Inscripciones totales</div>
+          <div className="stat-value" style={{ color: '#34d399' }}>{summary.totalRegs.toLocaleString()}</div>
+        </div>
+        <div className="stat">
+          <div className="stat-label"><UserDeleteOutlined style={{ color: '#fb923c', marginRight: 6 }} />% rechazos (prom.)</div>
+          <div className="stat-value" style={{ color: summary.avgRejected > 0 ? '#fb923c' : '#e2e8f0' }}>
+            {summary.avgRejected.toFixed(2)}%
+          </div>
+        </div>
+        <div className="stat">
+          <div className="stat-label">Espera prom. global</div>
+          <div className="stat-value">{summary.avgWait.toFixed(2)} <span style={{ fontSize: 12, color: '#94a3b8' }}>min</span></div>
+        </div>
+      </div>
 
       <Table
         dataSource={simulations}
         columns={columns}
         rowKey="id"
         loading={loading}
-        pagination={{ pageSize: 5 }}
+        pagination={{ pageSize: 5, showSizeChanger: false }}
         scroll={{ x: 'max-content' }}
-        rowClassName={(record) => record.id === activeId ? 'active-row' : ''}
-        locale={{ emptyText: <span style={{ color: '#64748b' }}>No hay simulaciones registradas. ¡Inicie su primera simulación arriba!</span> }}
+        rowClassName={(record) => (record.id === activeId ? 'active-row' : '')}
+        locale={{
+          emptyText: (
+            <span style={{ color: '#64748b' }}>
+              No hay simulaciones registradas. Ejecute una corrida desde el formulario superior.
+            </span>
+          ),
+        }}
       />
     </Card>
   );

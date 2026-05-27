@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
-import { Alert, Table, Tooltip, Typography } from 'antd';
+import { Table, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
   ClockCircleOutlined,
@@ -336,14 +336,6 @@ const StateVectorTable = ({
 
   return (
     <>
-      <Alert
-        message="Registro Detallado del Vector de Estados (Traza FEL)"
-        description="La tabla usa paginación desde SQLite y virtualización en el navegador para mantener fluido el scroll incluso con páginas grandes."
-        type="info"
-        showIcon
-        style={{ marginBottom: 16, backgroundColor: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.2)' }}
-      />
-
       <Table
         virtual
         dataSource={lines}

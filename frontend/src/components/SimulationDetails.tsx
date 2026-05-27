@@ -1,26 +1,70 @@
-import { Card, Row, Col, Statistic, Typography, Tag, Space, Empty, Spin } from 'antd';
+import { useState } from 'react';
+import { Card, Row, Col, Statistic, Tabs, Tag, Empty, Spin, Button, message } from 'antd';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, Legend, ResponsiveContainer } from 'recharts';
-import { 
-  CheckCircleOutlined, 
-  HourglassOutlined, 
-  UserDeleteOutlined, 
-  ToolOutlined, 
+import {
+  CheckCircleOutlined,
+  HourglassOutlined,
+  UserDeleteOutlined,
+  ToolOutlined,
   TrophyOutlined,
   LaptopOutlined,
   ClockCircleOutlined,
   TeamOutlined,
   SyncOutlined,
   SettingOutlined,
-  WarningOutlined
+  WarningOutlined,
+  BarChartOutlined,
+  TableOutlined,
+  FileExcelOutlined,
 } from '@ant-design/icons';
 import StateVectorTable from './StateVectorTable';
 import { useSimulationDetails } from '../hooks/useSimulationDetails';
-
-const { Text, Paragraph } = Typography;
+import { exportSimulationXlsx } from '../api/simulations';
 
 interface SimulationDetailsProps {
   simulationId: number | null;
 }
+
+const KpiCard = ({
+  label,
+  value,
+  precision,
+  suffix,
+  color,
+  icon,
+  caption,
+  highlight,
+}: {
+  label: string;
+  value: number;
+  precision?: number;
+  suffix?: string;
+  color: string;
+  icon: React.ReactNode;
+  caption?: string;
+  highlight?: boolean;
+}) => (
+  <div
+    className="kpi-card"
+    style={
+      highlight
+        ? { background: 'linear-gradient(180deg, rgba(99,102,241,0.10), rgba(99,102,241,0.02))', borderColor: 'rgba(99,102,241,0.30)' }
+        : undefined
+    }
+  >
+    <Statistic
+      title={<span style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500, letterSpacing: '0.02em' }}>{label}</span>}
+      value={value}
+      precision={precision}
+      valueStyle={{ color, fontWeight: 700, fontSize: 24, letterSpacing: '-0.02em' }}
+      prefix={<span style={{ marginRight: 8, color, fontSize: 18 }}>{icon}</span>}
+      suffix={suffix}
+    />
+    {caption && (
+      <div style={{ fontSize: 11, color: '#64748b', marginTop: 6 }}>{caption}</div>
+    )}
+  </div>
+);
 
 const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
   const {
@@ -36,126 +80,139 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
     setPageSize,
   } = useSimulationDetails(simulationId);
 
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    if (!simulationId) return;
+    setExporting(true);
+    try {
+      const res = await exportSimulationXlsx(simulationId);
+      const blob = new Blob([res.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `simulacion_${simulationId}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      message.success('Excel descargado');
+    } catch {
+      message.error('No se pudo exportar la simulación');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (!simulationId) {
     return (
-      <Card className="glass-panel" style={{ textAlign: 'center', padding: '60px 0' }}>
-        <Empty 
-          description={
-            <span style={{ color: '#94a3b8' }}>
-              Seleccione una simulación en el historial superior para cargar el análisis detallado.
-            </span>
-          } 
-        />
+      <Card className="glass-panel" style={{ textAlign: 'center', padding: '48px 0' }}>
+        <Empty description={<span style={{ color: '#94a3b8' }}>Seleccione una simulación del historial para ver el análisis detallado.</span>} />
       </Card>
     );
   }
 
   if (loadingDetails && !simulation) {
     return (
-      <Card className="glass-panel" style={{ textAlign: 'center', padding: '60px 0' }}>
+      <Card className="glass-panel" style={{ textAlign: 'center', padding: '48px 0' }}>
         <Spin size="large" />
-        <Paragraph style={{ color: '#94a3b8', marginTop: 16 }}>Cargando análisis de la simulación...</Paragraph>
+        <div style={{ color: '#94a3b8', marginTop: 16 }}>Cargando análisis…</div>
       </Card>
     );
   }
 
   if (!simulation) return null;
 
-  return (
-    <div style={{ marginTop: 24 }}>
-      {/* 1. KPI Panel */}
+  const overviewTab = (
+    <>
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={12} sm={12} md={4}>
-          <div className="kpi-card glass-panel" style={{ height: '100%' }}>
-            <Statistic
-              title={<span style={{ color: '#94a3b8', fontSize: 13 }}>Inscripciones Comp.</span>}
-              value={simulation.registrations_completed}
-              valueStyle={{ color: '#4ade80', fontWeight: 700 }}
-              prefix={<CheckCircleOutlined style={{ marginRight: 6 }} />}
-            />
-            <Text style={{ fontSize: 11, color: '#64748b' }}>Inscripciones exitosas</Text>
-          </div>
+        <Col xs={12} md={6} lg={5}>
+          <KpiCard
+            label="Inscripciones completadas"
+            value={simulation.registrations_completed}
+            color="#34d399"
+            icon={<CheckCircleOutlined />}
+            caption="Inscripciones exitosas"
+          />
         </Col>
-
-        <Col xs={12} sm={12} md={5}>
-          <div className="kpi-card glass-panel" style={{ height: '100%' }}>
-            <Statistic
-              title={<span style={{ color: '#94a3b8', fontSize: 13 }}>Espera Prom. Alumno</span>}
-              value={simulation.avg_waiting_time / 60}
-              precision={2}
-              valueStyle={{ color: '#c084fc', fontWeight: 700 }}
-              prefix={<HourglassOutlined style={{ marginRight: 6 }} />}
-              suffix=" min"
-            />
-            <Text style={{ fontSize: 11, color: '#64748b' }}>{(simulation.avg_waiting_time).toFixed(1)}s por alumno en cola</Text>
-          </div>
+        <Col xs={12} md={6} lg={5}>
+          <KpiCard
+            label="Espera promedio"
+            value={simulation.avg_waiting_time / 60}
+            precision={2}
+            suffix=" min"
+            color="#c084fc"
+            icon={<HourglassOutlined />}
+            caption={`${simulation.avg_waiting_time.toFixed(1)}s por alumno en cola`}
+          />
         </Col>
-
-        <Col xs={12} sm={12} md={5}>
-          <div className="kpi-card glass-panel" style={{ height: '100%' }}>
-            <Statistic
-              title={<span style={{ color: '#94a3b8', fontSize: 13 }}>% Intentos Rechazados</span>}
-              value={simulation.pct_students_returned}
-              precision={2}
-              valueStyle={{ color: simulation.pct_students_returned > 0 ? '#fb923c' : '#4ade80', fontWeight: 700 }}
-              prefix={<UserDeleteOutlined style={{ marginRight: 6 }} />}
-              suffix="%"
-            />
-            <Text style={{ fontSize: 11, color: '#64748b' }}>
-              {simulation.total_students_returned} de {simulation.total_students_arrived} intentos se retiraron
-            </Text>
-          </div>
+        <Col xs={12} md={6} lg={5}>
+          <KpiCard
+            label="Intentos rechazados"
+            value={simulation.pct_students_returned}
+            precision={2}
+            suffix="%"
+            color={simulation.pct_students_returned > 0 ? '#fb923c' : '#34d399'}
+            icon={<UserDeleteOutlined />}
+            caption={`${simulation.total_students_returned} de ${simulation.total_students_arrived} se retiraron`}
+          />
         </Col>
-
-        <Col xs={12} sm={12} md={5}>
-          <div className="kpi-card glass-panel" style={{ height: '100%' }}>
-            <Statistic
-              title={<span style={{ color: '#94a3b8', fontSize: 13 }}>Ocio Prom. Técnico</span>}
-              value={simulation.avg_technician_idle_time / 60}
-              precision={2}
-              valueStyle={{ color: '#a5b4fc', fontWeight: 700 }}
-              prefix={<ToolOutlined style={{ marginRight: 6 }} />}
-              suffix=" min"
-            />
-            <Text style={{ fontSize: 11, color: '#64748b' }}>{(simulation.avg_technician_idle_time).toFixed(1)}s por visita</Text>
-          </div>
+        <Col xs={12} md={6} lg={5}>
+          <KpiCard
+            label="Ocio promedio del técnico"
+            value={simulation.avg_technician_idle_time / 60}
+            precision={2}
+            suffix=" min"
+            color="#a5b4fc"
+            icon={<ToolOutlined />}
+            caption={`${simulation.avg_technician_idle_time.toFixed(1)}s por visita`}
+          />
         </Col>
-
-        <Col xs={24} sm={24} md={5}>
-          <div className="kpi-card glass-panel" style={{ height: '100%', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(20, 26, 46, 0.5) 100%)' }}>
-            <Statistic
-              title={<span style={{ color: '#a5b4fc', fontSize: 13 }}>Visitas Técnico</span>}
-              value={simulation.total_technician_visits}
-              valueStyle={{ color: '#818cf8', fontWeight: 700 }}
-              prefix={<TrophyOutlined style={{ marginRight: 6 }} />}
-            />
-            <Text style={{ fontSize: 11, color: '#818cf8' }}>Rondas de mantenimiento</Text>
-          </div>
+        <Col xs={24} md={24} lg={4}>
+          <KpiCard
+            label="Visitas del técnico"
+            value={simulation.total_technician_visits}
+            color="#818cf8"
+            icon={<TrophyOutlined />}
+            caption="Rondas de mantenimiento"
+            highlight
+          />
         </Col>
       </Row>
 
-      {/* 2. Charts and Parameters */}
-      <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
+      <Row gutter={[24, 24]}>
         <Col xs={24} lg={16}>
-          <Card className="glass-panel" title={<span style={{ color: '#f8fafc' }}>Estadísticas de Utilización de Computadoras</span>}>
+          <Card
+            className="glass-panel"
+            title={
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#f1f5f9' }}>
+                <BarChartOutlined style={{ color: '#818cf8' }} />
+                Utilización de Computadoras
+              </span>
+            }
+          >
             {pcUtilization.length > 0 ? (
-              <div style={{ width: '100%', height: 300 }}>
+              <div style={{ width: '100%', height: 320 }}>
                 <ResponsiveContainer>
-                  <BarChart
-                    data={pcUtilization}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="name" stroke="#94a3b8" />
-                    <YAxis stroke="#94a3b8" unit="%" />
-                    <ChartTooltip 
-                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
-                      labelStyle={{ color: '#f8fafc', fontWeight: 'bold' }}
+                  <BarChart data={pcUtilization} margin={{ top: 20, right: 24, left: 8, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.10)" />
+                    <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} />
+                    <YAxis stroke="#94a3b8" unit="%" tick={{ fontSize: 12 }} />
+                    <ChartTooltip
+                      contentStyle={{
+                        backgroundColor: '#0f1320',
+                        border: '1px solid rgba(148, 163, 184, 0.15)',
+                        borderRadius: 10,
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
+                      }}
+                      labelStyle={{ color: '#f1f5f9', fontWeight: 600 }}
                     />
-                    <Legend wrapperStyle={{ color: '#94a3b8' }} />
-                    <Bar dataKey="Ocupado (%)" stackId="a" fill="#60a5fa" />
+                    <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 12 }} />
+                    <Bar dataKey="Ocupado (%)" stackId="a" fill="#60a5fa" radius={[0, 0, 0, 0]} />
                     <Bar dataKey="Mantenimiento (%)" stackId="a" fill="#fb923c" />
-                    <Bar dataKey="Libre (%)" stackId="a" fill="#4ade80" />
+                    <Bar dataKey="Libre (%)" stackId="a" fill="#34d399" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -166,137 +223,183 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
         </Col>
 
         <Col xs={24} lg={8}>
-          <Card 
-            className="glass-panel" 
+          <Card
+            className="glass-panel"
             title={
-              <Space>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#f1f5f9' }}>
                 <SettingOutlined style={{ color: '#818cf8' }} />
-                <span style={{ color: '#f8fafc', fontWeight: 600 }}>Parámetros de la Simulación</span>
-              </Space>
-            } 
-            style={{ height: '100%', background: 'rgba(15, 23, 42, 0.4)' }}
+                Parámetros
+              </span>
+            }
+            style={{ height: '100%' }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              
-              {/* 1. INFRAESTRUCTURA & TIEMPO */}
-              <div style={{ padding: '10px 12px', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#818cf8', fontWeight: 600, fontSize: '11px', letterSpacing: '0.05em' }}>
-                  <LaptopOutlined />
-                  <span>SISTEMA & TIEMPO SIMULADO</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="param-row">
+                <div className="param-row-label" style={{ color: '#818cf8' }}>
+                  <LaptopOutlined /> Sistema & tiempo
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
-                    <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginBottom: '2px' }}>INFRAESTRUCTURA</Text>
-                    <Tag color="blue" style={{ fontSize: '11px', fontWeight: 'bold', margin: 0, width: '100%', textAlign: 'center', border: '1px solid rgba(96, 165, 250, 0.15)' }}>
+                    <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4, letterSpacing: '0.05em' }}>INFRAESTRUCTURA</div>
+                    <Tag color="blue" style={{ margin: 0, width: '100%', textAlign: 'center', fontWeight: 600 }}>
                       {simulation.num_pcs} PCs
                     </Tag>
                   </div>
                   <div>
-                    <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginBottom: '2px' }}>TIEMPO TOTAL</Text>
-                    <Tag color="cyan" style={{ fontSize: '11px', fontWeight: 'bold', margin: 0, width: '100%', textAlign: 'center', border: '1px solid rgba(34, 211, 238, 0.15)' }}>
-                      {simulation.sim_hours || (simulation.sim_days * 24)} horas
+                    <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4, letterSpacing: '0.05em' }}>TIEMPO</div>
+                    <Tag color="cyan" style={{ margin: 0, width: '100%', textAlign: 'center', fontWeight: 600 }}>
+                      {simulation.sim_hours || simulation.sim_days * 24} h
                     </Tag>
                   </div>
                 </div>
               </div>
 
-              {/* 2. CICLO DE ALUMNOS */}
-              <div style={{ padding: '10px 12px', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#c084fc', fontWeight: 600, fontSize: '11px', letterSpacing: '0.05em' }}>
-                  <TeamOutlined />
-                  <span>LLEGADAS & INSCRIPCIONES</span>
+              <div className="param-row">
+                <div className="param-row-label" style={{ color: '#c084fc' }}>
+                  <TeamOutlined /> Llegadas & inscripción
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
-                    <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginBottom: '2px' }}>LLEGADAS (MEDIA)</Text>
-                    <div style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <ClockCircleOutlined style={{ color: '#c084fc', fontSize: '11px' }} />
+                    <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4 }}>LLEGADAS (MEDIA)</div>
+                    <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <ClockCircleOutlined style={{ color: '#c084fc' }} />
                       {simulation.mean_arrival_time} min
                     </div>
                   </div>
                   <div>
-                    <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginBottom: '2px' }}>INSCRIPCIÓN MÍN/MÁX</Text>
-                    <div style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <HourglassOutlined style={{ color: '#c084fc', fontSize: '11px' }} />
-                      {simulation.min_enrollment}-{simulation.max_enrollment} min
+                    <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4 }}>INSCRIPCIÓN MÍN/MÁX</div>
+                    <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <HourglassOutlined style={{ color: '#c084fc' }} />
+                      {simulation.min_enrollment}–{simulation.max_enrollment} min
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* 3. MANTENIMIENTO TÉCNICO */}
-              <div style={{ padding: '10px 12px', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#fb923c', fontWeight: 600, fontSize: '11px', letterSpacing: '0.05em' }}>
-                  <ToolOutlined />
-                  <span>MANTENIMIENTO DEL TÉCNICO</span>
+              <div className="param-row">
+                <div className="param-row-label" style={{ color: '#fb923c' }}>
+                  <ToolOutlined /> Mantenimiento del técnico
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div>
-                      <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginBottom: '2px' }}>REGRESO (MEDIA)</Text>
-                      <div style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <SyncOutlined style={{ color: '#fb923c', fontSize: '11px' }} />
-                        {simulation.mean_technician_return_time} min
-                      </div>
-                    </div>
-                    <div>
-                      <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginBottom: '2px' }}>VARIACIÓN (+/-)</Text>
-                      <div style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '12px' }}>
-                        &plusmn; {simulation.technician_return_time_variation} min
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '4px', marginTop: '2px' }}>
-                    <Text type="secondary" style={{ fontSize: '9px', display: 'inline', marginRight: '6px' }}>MANTENIMIENTO:</Text>
-                    <span style={{ color: '#e2e8f0', fontWeight: '600', fontSize: '10px' }}>
-                      {simulation.min_maintenance_time} a {simulation.max_maintenance_time} min
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 4. TOLERANCIA DEL ALUMNO */}
-              <div style={{ padding: '10px 12px', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#f87171', fontWeight: 600, fontSize: '11px', letterSpacing: '0.05em' }}>
-                  <WarningOutlined />
-                  <span>TOLERANCIA DEL ALUMNO</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
-                    <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginBottom: '2px' }}>LÍMITE DE COLA</Text>
-                    <Tag color="error" style={{ fontSize: '11px', fontWeight: 'bold', margin: 0, width: '100%', textAlign: 'center', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+                    <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4 }}>REGRESO (MEDIA)</div>
+                    <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <SyncOutlined style={{ color: '#fb923c' }} />
+                      {simulation.mean_technician_return_time} min
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4 }}>VARIACIÓN ±</div>
+                    <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 13 }}>
+                      ± {simulation.technician_return_time_variation} min
+                    </div>
+                  </div>
+                </div>
+                <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(148,163,184,0.06)', fontSize: 11 }}>
+                  <span style={{ color: '#64748b', marginRight: 6 }}>MANTENIMIENTO:</span>
+                  <span style={{ color: '#e2e8f0', fontWeight: 600 }}>
+                    {simulation.min_maintenance_time}–{simulation.max_maintenance_time} min
+                  </span>
+                </div>
+              </div>
+
+              <div className="param-row">
+                <div className="param-row-label" style={{ color: '#f87171' }}>
+                  <WarningOutlined /> Tolerancia del alumno
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4 }}>LÍMITE DE COLA</div>
+                    <Tag color="error" style={{ margin: 0, width: '100%', textAlign: 'center', fontWeight: 600 }}>
                       {simulation.student_wait_threshold} alumnos
                     </Tag>
                   </div>
                   <div>
-                    <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginBottom: '2px' }}>DEMORA RETORNO</Text>
-                    <div style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '12px', paddingTop: '2px' }}>
+                    <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4 }}>DEMORA RETORNO</div>
+                    <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 13, paddingTop: 2 }}>
                       {simulation.student_return_time} min
                     </div>
                   </div>
                 </div>
               </div>
-
             </div>
           </Card>
         </Col>
       </Row>
+    </>
+  );
 
-      {/* 3. Detailed Vector State Table */}
-      <Card className="glass-panel" title={<span style={{ color: '#f8fafc' }}>Explorador de Vector de Estados</span>}>
-        <StateVectorTable
-          lines={lines}
-          loading={loadingLines}
-          page={page}
-          pageSize={pageSize}
-          total={totalLines}
-          queueLimit={simulation.student_wait_threshold}
-          onPageChange={(p, ps) => {
-            setPage(p);
-            setPageSize(ps);
+  const traceTab = (
+    <Card className="glass-panel" bodyStyle={{ padding: 20 }}>
+      <StateVectorTable
+        lines={lines}
+        loading={loadingLines}
+        page={page}
+        pageSize={pageSize}
+        total={totalLines}
+        queueLimit={simulation.student_wait_threshold}
+        onPageChange={(p, ps) => {
+          setPage(p);
+          setPageSize(ps);
+        }}
+      />
+    </Card>
+  );
+
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 12,
+          gap: 12,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div className="section-heading" style={{ marginBottom: 0 }}>
+          <BarChartOutlined /> Análisis · Simulación #{simulation.id}
+        </div>
+        <Button
+          icon={<FileExcelOutlined />}
+          onClick={handleExport}
+          loading={exporting}
+          style={{
+            background: 'rgba(34, 197, 94, 0.10)',
+            borderColor: 'rgba(34, 197, 94, 0.35)',
+            color: '#86efac',
+            fontWeight: 500,
           }}
-        />
-      </Card>
+        >
+          Descargar Excel
+        </Button>
+      </div>
+
+      <Tabs
+        defaultActiveKey="overview"
+        size="large"
+        items={[
+          {
+            key: 'overview',
+            label: (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <BarChartOutlined /> Resumen
+              </span>
+            ),
+            children: overviewTab,
+          },
+          {
+            key: 'trace',
+            label: (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <TableOutlined /> Vector de estados
+              </span>
+            ),
+            children: traceTab,
+          },
+        ]}
+      />
     </div>
   );
 };
