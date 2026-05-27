@@ -23,3 +23,7 @@ export const getSimulationLines = (id: number, { page, limit }: { page: number; 
 );
 
 export const getSimulationPcStats = (id: number) => axios.get<PcUtilization[]>(`${API_URL}/simulations/${id}/pc_stats`);
+
+export const exportSimulationXlsx = (id: number) => (
+  axios.get<Blob>(`${API_URL}/simulations/${id}/export`, { responseType: 'blob' })
+);
