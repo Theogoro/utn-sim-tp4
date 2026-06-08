@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Table, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -11,6 +11,7 @@ import {
   ToolOutlined,
 } from '@ant-design/icons';
 import type { SimulationLine } from '../types/simulation';
+import { SimulationLineDrawer } from './SimulationLineDrawer';
 
 const { Text } = Typography;
 
@@ -461,6 +462,7 @@ const StateVectorTable = ({
   onPageChange,
 }: StateVectorTableProps) => {
   const columns = useMemo(() => createColumns(queueLimit || 5), [queueLimit]);
+  const [selectedLine, setSelectedLine] = useState<SimulationLine | null>(null);
 
   return (
     <>
@@ -471,6 +473,21 @@ const StateVectorTable = ({
         rowKey="id"
         loading={loading}
         scroll={TABLE_SCROLL}
+        rowClassName={(record) => (
+          selectedLine?.id === record.id ? 'active-row trace-row' : 'trace-row'
+        )}
+        onRow={(record) => ({
+          tabIndex: 0,
+          role: 'button',
+          'aria-label': `Abrir detalle de línea ${record.line_index}`,
+          onClick: () => setSelectedLine(record),
+          onKeyDown: (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              setSelectedLine(record);
+            }
+          },
+        })}
         pagination={{
           current: page,
           pageSize,
@@ -479,6 +496,11 @@ const StateVectorTable = ({
           showSizeChanger: true,
           pageSizeOptions: PAGE_SIZE_OPTIONS,
         }}
+      />
+      <SimulationLineDrawer
+        line={selectedLine}
+        open={selectedLine !== null}
+        onClose={() => setSelectedLine(null)}
       />
     </>
   );
