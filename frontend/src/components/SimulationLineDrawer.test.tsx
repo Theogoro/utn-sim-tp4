@@ -84,4 +84,16 @@ describe('SimulationLineDrawer', () => {
 
     expect(onClose).toHaveBeenCalledOnce();
   });
+
+  it('shows long scheduled times using total hours', () => {
+    render(
+      <SimulationLineDrawer
+        line={{ ...line, student_next_arrival_time: 25 * 60 * 60 }}
+        open
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('25:00:00')).toBeInTheDocument();
+  });
 });
