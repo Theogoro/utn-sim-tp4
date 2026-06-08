@@ -38,7 +38,7 @@ const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading 
       key: 'id',
       width: 70,
       render: (id: number) => (
-        <span style={{ color: '#818cf8', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>#{id}</span>
+        <span style={{ color: '#2563eb', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>#{id}</span>
       ),
     },
     {
@@ -50,7 +50,7 @@ const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading 
         return (
           <Space size={6}>
             <CalendarOutlined style={{ color: '#64748b' }} />
-            <span style={{ color: '#cbd5e1' }}>
+            <span style={{ color: '#334155' }}>
               {date.toLocaleDateString()} {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </Space>
@@ -72,7 +72,7 @@ const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading 
       key: 'num_pcs',
       render: (pcs: number) => (
         <Space size={6}>
-          <LaptopOutlined style={{ color: '#a5b4fc' }} />
+          <LaptopOutlined style={{ color: '#2563eb' }} />
           <span>{pcs}</span>
         </Space>
       ),
@@ -81,14 +81,14 @@ const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading 
       title: 'Arribados',
       dataIndex: 'total_new_students_arrived',
       key: 'total_new_students_arrived',
-      render: (count: number) => <span className="mono" style={{ color: '#e2e8f0' }}>{count.toLocaleString()}</span>,
+      render: (count: number) => <span className="mono" style={{ color: '#334155' }}>{count.toLocaleString()}</span>,
     },
     {
       title: 'Inscripciones',
       dataIndex: 'registrations_completed',
       key: 'registrations_completed',
       render: (count: number) => (
-        <span className="mono" style={{ color: '#34d399', fontWeight: 600 }}>{count.toLocaleString()}</span>
+        <span className="mono" style={{ color: '#15803d', fontWeight: 600 }}>{count.toLocaleString()}</span>
       ),
     },
     {
@@ -106,7 +106,7 @@ const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading 
       key: 'avg_waiting_time',
       render: (secs: number) => (
         <Tooltip title={`${secs.toFixed(1)} segundos`}>
-          <span className="mono" style={{ color: '#f1f5f9', fontWeight: 600 }}>{(secs / 60).toFixed(2)} min</span>
+          <span className="mono" style={{ color: '#0f172a', fontWeight: 600 }}>{(secs / 60).toFixed(2)} min</span>
         </Tooltip>
       ),
     },
@@ -116,7 +116,7 @@ const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading 
       key: 'avg_technician_idle_time',
       render: (secs: number) => (
         <Tooltip title={`${secs.toFixed(1)} segundos`}>
-          <span className="mono" style={{ color: '#cbd5e1' }}>{(secs / 60).toFixed(2)} min</span>
+          <span className="mono" style={{ color: '#334155' }}>{(secs / 60).toFixed(2)} min</span>
         </Tooltip>
       ),
     },
@@ -134,7 +134,7 @@ const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading 
             size="small"
             style={
               activeId !== record.id
-                ? { background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', borderColor: 'rgba(148,163,184,0.15)' }
+                ? { background: '#ffffff', color: '#334155', borderColor: '#d9e2ec' }
                 : {}
             }
           >
@@ -162,10 +162,10 @@ const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading 
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12, marginBottom: 18 }}>
         <div>
-          <div style={{ fontSize: 18, fontWeight: 600, color: '#f1f5f9', letterSpacing: '-0.01em' }}>
+          <div style={{ fontSize: 18, fontWeight: 600, color: '#0f172a', letterSpacing: 0 }}>
             Simulaciones realizadas
           </div>
-          <div style={{ color: '#94a3b8', fontSize: 13, marginTop: 4 }}>
+          <div style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>
             Compare corridas y abra el análisis detallado de cualquier ejecución.
           </div>
         </div>
@@ -177,18 +177,18 @@ const SimulationHistory = ({ simulations, onSelect, onDelete, activeId, loading 
           <div className="stat-value">{summary.runs}</div>
         </div>
         <div className="stat">
-          <div className="stat-label"><CheckCircleOutlined style={{ color: '#34d399', marginRight: 6 }} />Inscripciones totales</div>
-          <div className="stat-value" style={{ color: '#34d399' }}>{summary.totalRegs.toLocaleString()}</div>
+          <div className="stat-label"><CheckCircleOutlined style={{ color: '#15803d', marginRight: 6 }} />Inscripciones totales</div>
+          <div className="stat-value" style={{ color: '#15803d' }}>{summary.totalRegs.toLocaleString()}</div>
         </div>
         <div className="stat">
-          <div className="stat-label"><UserDeleteOutlined style={{ color: '#fb923c', marginRight: 6 }} />% rechazos (prom.)</div>
-          <div className="stat-value" style={{ color: summary.avgRejected > 0 ? '#fb923c' : '#e2e8f0' }}>
+          <div className="stat-label"><UserDeleteOutlined style={{ color: '#b45309', marginRight: 6 }} />% rechazos (prom.)</div>
+          <div className="stat-value" style={{ color: summary.avgRejected > 0 ? '#b45309' : '#334155' }}>
             {summary.avgRejected.toFixed(2)}%
           </div>
         </div>
         <div className="stat">
           <div className="stat-label">Espera prom. global</div>
-          <div className="stat-value">{summary.avgWait.toFixed(2)} <span style={{ fontSize: 12, color: '#94a3b8' }}>min</span></div>
+          <div className="stat-value">{summary.avgWait.toFixed(2)} <span style={{ fontSize: 12, color: '#64748b' }}>min</span></div>
         </div>
       </div>
 

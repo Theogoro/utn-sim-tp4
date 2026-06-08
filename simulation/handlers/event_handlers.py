@@ -20,6 +20,7 @@ def find_idle_pc(state):
 
 
 def find_idle_pending_maintenance_pc(state):
+    """Busca la primera PC libre entre las pendientes de la visita actual."""
     for pc_id in state.encargado.pcs_pendientes_mantenimiento:
         idx = pc_id - 1
         if state.pcs[idx].state == PC_LIBRE:
@@ -28,6 +29,7 @@ def find_idle_pending_maintenance_pc(state):
 
 
 def start_enrollment(state, pc_index: int, student_id: int):
+    """Asigna un alumno a una PC y agenda el fin de inscripción."""
     student = state.students_by_id[student_id]
     pc = state.pcs[pc_index]
     pc.change_state(PC_INSCRIPCION, state.current_time)
@@ -53,6 +55,7 @@ def enqueue_student(state, student):
 
 
 def schedule_student_return(state, student):
+    """Deja al alumno en EV y agenda su retorno futuro."""
     state.stats.total_students_returned += 1
     student.times_returned_later += 1
     student.state = ALUMNO_ESPERANDO_VOLVER
@@ -63,6 +66,11 @@ def schedule_student_return(state, student):
 
 
 def admit_or_defer_student(state, student, schedule_return_when_full: bool = True):
+    """Decide si el alumno entra a PC, espera en cola o se retira.
+
+    `schedule_return_when_full=False` se usa cuando el alumno ya volvió una vez:
+    si la cola sigue llena, se registra como rechazado final y sale de memoria activa.
+    """
     student.attempts += 1
     student.last_event_time = state.current_time
     free = find_idle_pc(state)
@@ -84,6 +92,7 @@ def admit_or_defer_student(state, student, schedule_return_when_full: bool = Tru
 
 
 def dequeue_and_start_enrollment(state, pc_index: int):
+    """Consume la cola FIFO y acumula la espera del alumno que pasa a inscribirse."""
     student_id = state.queue_student_ids.popleft()
     student = state.students_by_id[student_id]
     waited = state.current_time - (student.waiting_started_at or state.current_time)
@@ -94,6 +103,7 @@ def dequeue_and_start_enrollment(state, pc_index: int):
 
 
 def schedule_maintenance(state, pc_index: int):
+    """Toma una PC para mantenimiento y agenda su finalización."""
     pc = state.pcs[pc_index]
     pc.change_state(PC_MANTENIMIENTO, state.current_time)
     pc.current_student_id = None
@@ -110,6 +120,7 @@ def schedule_maintenance(state, pc_index: int):
 
 
 def technician_take_pc_or_wait(state):
+    """El encargado toma una PC pendiente libre; si no hay, queda en EPC."""
     pc_index = find_idle_pending_maintenance_pc(state)
     if pc_index is not None:
         if state.encargado.state == ENCARGADO_ESPERANDO_PC and state.encargado.esperando_desde is not None:
@@ -122,6 +133,7 @@ def technician_take_pc_or_wait(state):
 
 
 def start_maintenance_visit(state):
+    """Inicia una ronda: todas las PCs quedan pendientes hasta recibir mantenimiento."""
     state.encargado.pcs_pendientes_mantenimiento = [pc.id for pc in state.pcs]
     state.encargado.state = ENCARGADO_ESPERANDO_MANTENIMIENTO
     state.encargado.esperando_desde = None
@@ -131,6 +143,7 @@ def start_maintenance_visit(state):
 
 
 def schedule_next_maintenance_start(state):
+    """Agenda la próxima visita usando la frecuencia 60 +/- variación."""
     rnd, ret = uniform(
         state.params.mean_technician_return_time - state.params.technician_return_time_variation,
         state.params.mean_technician_return_time + state.params.technician_return_time_variation,
@@ -141,6 +154,7 @@ def schedule_next_maintenance_start(state):
 
 
 def finish_maintenance_visit_if_done(state) -> bool:
+    """Cierra la ronda si ya no quedan PCs pendientes."""
     if state.encargado.pcs_pendientes_mantenimiento:
         return False
     state.stats.total_technician_visits += 1

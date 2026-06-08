@@ -75,10 +75,10 @@ const SimulationForm = ({ onSubmit, loading }: SimulationFormProps) => {
           <div className="section-heading" style={{ marginBottom: 6 }}>
             <span>Configuración</span>
           </div>
-          <div style={{ fontSize: 18, fontWeight: 600, color: '#f1f5f9', letterSpacing: '-0.01em' }}>
+          <div style={{ fontSize: 18, fontWeight: 600, color: '#0f172a', letterSpacing: 0 }}>
             Parámetros de la simulación
           </div>
-          <div style={{ color: '#94a3b8', marginTop: 4, fontSize: 13 }}>
+          <div style={{ color: '#64748b', marginTop: 4, fontSize: 13 }}>
             Ajuste los parámetros o cargue el preset académico de la cátedra.
           </div>
         </div>
@@ -98,7 +98,7 @@ const SimulationForm = ({ onSubmit, loading }: SimulationFormProps) => {
           <Col xs={24} md={8}>
             <div className="subsection">
               <div className="subsection-title">
-                <LaptopOutlined style={{ color: '#818cf8' }} /> Infraestructura & Arribos
+                <LaptopOutlined style={{ color: '#2563eb' }} /> Infraestructura & Arribos
               </div>
 
               <Form.Item
@@ -127,7 +127,7 @@ const SimulationForm = ({ onSubmit, loading }: SimulationFormProps) => {
           <Col xs={24} md={8}>
             <div className="subsection">
               <div className="subsection-title">
-                <HourglassOutlined style={{ color: '#c084fc' }} /> Tiempos de Inscripción
+                <HourglassOutlined style={{ color: '#2563eb' }} /> Tiempos de Inscripción
               </div>
 
               <Row gutter={12}>
@@ -166,7 +166,7 @@ const SimulationForm = ({ onSubmit, loading }: SimulationFormProps) => {
               </Form.Item>
 
               <div className="subsection-title" style={{ marginTop: 4 }}>
-                <WarningOutlined style={{ color: '#f87171' }} /> Tolerancia & Retornos
+                <WarningOutlined style={{ color: '#b91c1c' }} /> Tolerancia & Retornos
               </div>
 
               <Row gutter={12}>
@@ -197,7 +197,7 @@ const SimulationForm = ({ onSubmit, loading }: SimulationFormProps) => {
           <Col xs={24} md={8}>
             <div className="subsection">
               <div className="subsection-title">
-                <ToolOutlined style={{ color: '#fb923c' }} /> Mantenimiento del Técnico
+                <ToolOutlined style={{ color: '#b45309' }} /> Mantenimiento del Técnico
               </div>
 
               <Row gutter={12}>
@@ -250,7 +250,7 @@ const SimulationForm = ({ onSubmit, loading }: SimulationFormProps) => {
               </Row>
 
               <div className="subsection-title" style={{ marginTop: 4 }}>
-                <ClockCircleOutlined style={{ color: '#38bdf8' }} /> Tiempo a simular
+                <ClockCircleOutlined style={{ color: '#0369a1' }} /> Tiempo a simular
               </div>
 
               <Form.Item name="sim_hours" rules={[{ required: true }]} style={{ marginBottom: 0 }}>

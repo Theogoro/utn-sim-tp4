@@ -20,31 +20,31 @@ const PAGE_SIZE_OPTIONS = ['10', '20', '50', '100', '500', '1000'];
 type EventStyle = [label: string, color: string, backgroundColor: string, borderColor: string];
 
 const eventStyles: Record<string, EventStyle> = {
-  inicializacion: ['Inicialización', '#94a3b8', 'rgba(148, 163, 184, 0.08)', 'rgba(148, 163, 184, 0.25)'],
-  inicialización: ['Inicialización', '#94a3b8', 'rgba(148, 163, 184, 0.08)', 'rgba(148, 163, 184, 0.25)'],
-  inicio: ['Inicialización', '#94a3b8', 'rgba(148, 163, 184, 0.08)', 'rgba(148, 163, 184, 0.25)'],
-  start: ['Inicialización', '#94a3b8', 'rgba(148, 163, 184, 0.08)', 'rgba(148, 163, 184, 0.25)'],
-  inicio_mantenimiento: ['Inicio Mantenimiento', '#fbbf24', 'rgba(251, 191, 36, 0.08)', 'rgba(251, 191, 36, 0.25)'],
+  inicializacion: ['Inicialización', '#475569', '#f1f5f9', '#d9e2ec'],
+  inicialización: ['Inicialización', '#475569', '#f1f5f9', '#d9e2ec'],
+  inicio: ['Inicialización', '#475569', '#f1f5f9', '#d9e2ec'],
+  start: ['Inicialización', '#475569', '#f1f5f9', '#d9e2ec'],
+  inicio_mantenimiento: ['Inicio Mantenimiento', '#92400e', '#fffbeb', '#fde68a'],
 };
 
 type PcVisual = [statusText: string, ledColor: string, ledGlow: string, border: string, pulseClass: string];
 
 const pcVisuals: Record<string, PcVisual> = {
-  idle: ['LIBRE', '#10b981', '0 0 6px rgba(16, 185, 129, 0.75)', 'rgba(16, 185, 129, 0.15)', ''],
-  busy: ['OCUPADO', '#3b82f6', '0 0 8px rgba(59, 130, 246, 0.85), 0 0 15px rgba(59, 130, 246, 0.4)', 'rgba(59, 130, 246, 0.2)', 'led-pulse-blue'],
-  maintenance: ['MANTENIMIENTO', '#f59e0b', '0 0 8px rgba(245, 158, 11, 0.85), 0 0 15px rgba(245, 158, 11, 0.4)', 'rgba(245, 158, 11, 0.25)', 'led-pulse-orange'],
-  L: ['LIBRE', '#10b981', '0 0 6px rgba(16, 185, 129, 0.75)', 'rgba(16, 185, 129, 0.15)', ''],
-  I: ['INSCRIPCIÓN', '#3b82f6', '0 0 8px rgba(59, 130, 246, 0.85), 0 0 15px rgba(59, 130, 246, 0.4)', 'rgba(59, 130, 246, 0.2)', 'led-pulse-blue'],
-  M: ['MANTENIMIENTO', '#f59e0b', '0 0 8px rgba(245, 158, 11, 0.85), 0 0 15px rgba(245, 158, 11, 0.4)', 'rgba(245, 158, 11, 0.25)', 'led-pulse-orange'],
+  idle: ['LIBRE', '#15803d', 'none', '#bbf7d0', ''],
+  busy: ['OCUPADO', '#2563eb', 'none', '#bfdbfe', 'led-pulse-blue'],
+  maintenance: ['MANTENIMIENTO', '#b45309', 'none', '#fde68a', 'led-pulse-orange'],
+  L: ['LIBRE', '#15803d', 'none', '#bbf7d0', ''],
+  I: ['INSCRIPCIÓN', '#2563eb', 'none', '#bfdbfe', 'led-pulse-blue'],
+  M: ['MANTENIMIENTO', '#b45309', 'none', '#fde68a', 'led-pulse-orange'],
 };
 
 const renderMutedMonospace = (val: number | string | null | undefined, isRnd = false, decimals = 4, suffix = ''): ReactNode => {
-  if (val === null || val === undefined) return <span style={{ color: '#475569' }}>-</span>;
+  if (val === null || val === undefined) return <span style={{ color: '#94a3b8' }}>-</span>;
   const displayVal = typeof val === 'number' ? val.toFixed(decimals) : val;
   return (
     <span style={{
       fontFamily: 'monospace, var(--font-family)',
-      color: isRnd ? '#64748b' : '#94a3b8',
+      color: isRnd ? '#64748b' : '#334155',
       fontSize: '11px',
       fontWeight: isRnd ? '400' : '600'
     }}>
@@ -56,31 +56,31 @@ const renderMutedMonospace = (val: number | string | null | undefined, isRnd = f
 const renderEvent = (evt: string): ReactNode => {
   let [label, color, bgColor, borderColor] = eventStyles[evt] || [
     evt,
-    '#a855f7',
-    'rgba(168, 85, 247, 0.08)',
-    'rgba(168, 85, 247, 0.2)',
+    '#2563eb',
+    '#eff6ff',
+    '#bfdbfe',
   ];
 
   if (evt?.startsWith('fin_inscripcion PC')) {
     label = evt.replace('fin_inscripcion', 'Fin Inscripción');
-    color = '#34d399';
-    bgColor = 'rgba(52, 211, 153, 0.08)';
-    borderColor = 'rgba(52, 211, 153, 0.25)';
+    color = '#15803d';
+    bgColor = '#ecfdf5';
+    borderColor = '#bbf7d0';
   } else if (evt?.startsWith('fin_mantenimiento PC')) {
     label = evt.replace('fin_mantenimiento', 'Fin Mantenimiento');
-    color = '#f97316';
-    bgColor = 'rgba(249, 115, 22, 0.08)';
-    borderColor = 'rgba(249, 115, 22, 0.25)';
+    color = '#b45309';
+    bgColor = '#fffbeb';
+    borderColor = '#fde68a';
   } else if (evt?.startsWith('llegada_alumno')) {
     label = evt.replace('llegada_alumno', 'Llegada Alumno');
-    color = '#c084fc';
-    bgColor = 'rgba(192, 132, 252, 0.08)';
-    borderColor = 'rgba(192, 132, 252, 0.25)';
+    color = '#2563eb';
+    bgColor = '#eff6ff';
+    borderColor = '#bfdbfe';
   } else if (evt?.startsWith('regreso_alumno')) {
     label = evt.replace('regreso_alumno', 'Regreso Alumno');
-    color = '#22d3ee';
-    bgColor = 'rgba(34, 211, 238, 0.08)';
-    borderColor = 'rgba(34, 211, 238, 0.25)';
+    color = '#0369a1';
+    bgColor = '#f0f9ff';
+    borderColor = '#bae6fd';
   }
 
   return (
@@ -93,7 +93,6 @@ const renderEvent = (evt: string): ReactNode => {
       color,
       fontWeight: 600,
       fontSize: '11px',
-      textShadow: `0 0 6px ${borderColor}`,
       fontFamily: 'monospace'
     }}>
       {label}
@@ -107,14 +106,15 @@ const renderEncargado = (snapshot: SimulationLine['encargado_snapshot']): ReactN
     ? snapshot.pcs_pendientes_mantenimiento.join(',')
     : '-';
   return (
-    <span style={{ color: '#fde68a', fontFamily: 'monospace', fontSize: '11px', fontWeight: 700 }}>
+    <span style={{ color: '#92400e', fontFamily: 'monospace', fontSize: '11px', fontWeight: 700 }}>
       {snapshot.state} <span style={{ color: '#64748b' }}>pend:</span> {pendientes}
     </span>
   );
 };
 
 const renderActiveStudents = (students: SimulationLine['active_students_snapshot']): ReactNode => {
-  if (!students?.length) return <span style={{ color: '#475569', fontFamily: 'monospace', fontSize: '11px' }}>-</span>;
+  if (!students?.length) return <span style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: '11px' }}>-</span>;
+  // La celda muestra un resumen corto; el tooltip conserva el detalle por alumno activo.
   const display = students.slice(0, 5).map(student => {
     const wait = student.esperando_en_fila_desde !== null ? ` EF@${student.esperando_en_fila_desde.toFixed(2)}` : '';
     const ret = student.minuto_vuelta !== null ? ` EV@${student.minuto_vuelta.toFixed(2)}` : '';
@@ -132,29 +132,29 @@ const renderActiveStudents = (students: SimulationLine['active_students_snapshot
   ].filter(Boolean).join(' | ')).join('\n');
   return (
     <Tooltip title={title}>
-      <span style={{ color: '#c7d2fe', fontFamily: 'monospace', fontSize: '11px' }}>{display}{suffix}</span>
+      <span style={{ color: '#1d4ed8', fontFamily: 'monospace', fontSize: '11px' }}>{display}{suffix}</span>
     </Tooltip>
   );
 };
 
 const renderQueueLength = (len: number, limit: number): ReactNode => {
-  let color = '#94a3b8';
-  let bgColor = 'rgba(148, 163, 184, 0.05)';
-  let border = '1px solid rgba(148, 163, 184, 0.12)';
+  let color = '#64748b';
+  let bgColor = '#f8fafc';
+  let border = '1px solid #d9e2ec';
 
   if (len > 0) {
     if (len >= limit) {
-      color = '#f87171';
-      bgColor = 'rgba(248, 113, 113, 0.12)';
-      border = '1px solid rgba(248, 113, 113, 0.35)';
+      color = '#b91c1c';
+      bgColor = '#fef2f2';
+      border = '1px solid #fecaca';
     } else if (len >= limit - 2) {
-      color = '#fb923c';
-      bgColor = 'rgba(251, 146, 60, 0.08)';
-      border = '1px solid rgba(251, 146, 60, 0.25)';
+      color = '#b45309';
+      bgColor = '#fffbeb';
+      border = '1px solid #fde68a';
     } else {
-      color = '#38bdf8';
-      bgColor = 'rgba(56, 189, 248, 0.06)';
-      border = '1px solid rgba(56, 189, 248, 0.18)';
+      color = '#0369a1';
+      bgColor = '#f0f9ff';
+      border = '1px solid #bae6fd';
     }
   }
 
@@ -190,13 +190,13 @@ const renderPcStates = (pcStatesStr: string | null | undefined): ReactNode => {
             <div style={{
               display: 'inline-flex',
               alignItems: 'center',
-              background: 'rgba(9, 13, 22, 0.65)',
+              background: '#ffffff',
               border: `1px solid ${border}`,
               borderRadius: '5px',
               padding: '2px 5px',
               gap: '4px',
               height: '18px',
-              boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.5)'
+              boxShadow: 'none'
             }}>
               <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 700, fontFamily: 'monospace' }}>
                 {i + 1}
@@ -228,10 +228,10 @@ const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
     width: 75,
     fixed: 'left',
     onHeaderCell: () => ({ className: 'header-col-general' }),
-    render: (idx: number) => <Text style={{ color: '#475569', fontFamily: 'monospace', fontSize: '11px' }}>{idx}</Text>
+    render: (idx: number) => <Text style={{ color: '#334155', fontFamily: 'monospace', fontSize: '11px' }}>{idx}</Text>
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#cbd5e1' }}><SettingOutlined /> Evento</span>,
+    title: <span style={{ fontSize: '11px', color: '#334155' }}><SettingOutlined /> Evento</span>,
     dataIndex: 'event_name',
     key: 'event_name',
     width: 210,
@@ -240,16 +240,16 @@ const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
     render: renderEvent
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#cbd5e1' }}><ClockCircleOutlined /> Reloj</span>,
+    title: <span style={{ fontSize: '11px', color: '#334155' }}><ClockCircleOutlined /> Reloj</span>,
     dataIndex: 'clock_formatted',
     key: 'clock_formatted',
     width: 100,
     fixed: 'left',
     onHeaderCell: () => ({ className: 'header-col-general' }),
-    render: (t: string) => <strong style={{ color: '#c084fc', fontFamily: 'monospace', fontSize: '11px' }}>{t}</strong>
+    render: (t: string) => <strong style={{ color: '#1d4ed8', fontFamily: 'monospace', fontSize: '11px' }}>{t}</strong>
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#cbd5e1' }}><TeamOutlined /> Cola</span>,
+    title: <span style={{ fontSize: '11px', color: '#334155' }}><TeamOutlined /> Cola</span>,
     dataIndex: 'queue_length',
     key: 'queue_length',
     width: 75,
@@ -257,7 +257,7 @@ const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
     render: (len: number) => renderQueueLength(len, queueLimit)
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#fde68a' }}><ToolOutlined /> Encargado</span>,
+    title: <span style={{ fontSize: '11px', color: '#92400e' }}><ToolOutlined /> Encargado</span>,
     dataIndex: 'encargado_snapshot',
     key: 'encargado_snapshot',
     width: 185,
@@ -266,7 +266,7 @@ const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
     render: renderEncargado
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#c7d2fe' }}><TeamOutlined /> Detalle alumnos</span>,
+    title: <span style={{ fontSize: '11px', color: '#1d4ed8' }}><TeamOutlined /> Detalle alumnos</span>,
     dataIndex: 'active_students_snapshot',
     key: 'active_students_snapshot',
     width: 360,
@@ -275,7 +275,7 @@ const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
     render: renderActiveStudents
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#c7d2fe' }}><ExperimentOutlined /> RND Lleg.</span>,
+    title: <span style={{ fontSize: '11px', color: '#1d4ed8' }}><ExperimentOutlined /> RND Lleg.</span>,
     dataIndex: 'student_rnd',
     key: 'student_rnd',
     width: 110,
@@ -284,7 +284,7 @@ const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
     render: (val: number | null) => renderMutedMonospace(val, true, 4)
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#c7d2fe' }}>Tpo Llegada (min)</span>,
+    title: <span style={{ fontSize: '11px', color: '#1d4ed8' }}>Tpo Llegada (min)</span>,
     dataIndex: 'student_arrival_time',
     key: 'student_arrival_time',
     width: 135,
@@ -293,25 +293,25 @@ const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
     render: (val: number | null) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#c7d2fe' }}>Próx. Llegada</span>,
+    title: <span style={{ fontSize: '11px', color: '#1d4ed8' }}>Próx. Llegada</span>,
     dataIndex: 'student_next_arrival_time',
     key: 'student_next_arrival_time',
     width: 115,
     onHeaderCell: () => ({ className: 'header-col-students' }),
     onCell: () => ({ className: 'cell-col-students' }),
-    render: (val: number | null) => val !== null ? <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#c084fc' }}>{new Date(val * 1000).toISOString().substr(11, 8)}</span> : renderMutedMonospace(null)
+    render: (val: number | null) => val !== null ? <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#1d4ed8' }}>{new Date(val * 1000).toISOString().substr(11, 8)}</span> : renderMutedMonospace(null)
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#c7d2fe' }}>Alumnos Rech.</span>,
+    title: <span style={{ fontSize: '11px', color: '#1d4ed8' }}>Alumnos Rech.</span>,
     dataIndex: 'total_students_returned',
     key: 'total_students_returned',
     width: 110,
     onHeaderCell: () => ({ className: 'header-col-students' }),
     onCell: () => ({ className: 'cell-col-students' }),
-    render: (val: number) => val > 0 ? <span style={{ color: '#f87171', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '11px' }}>{val}</span> : <span style={{ color: '#475569', fontSize: '11px', fontFamily: 'monospace' }}>0</span>
+    render: (val: number) => val > 0 ? <span style={{ color: '#b91c1c', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '11px' }}>{val}</span> : <span style={{ color: '#64748b', fontSize: '11px', fontFamily: 'monospace' }}>0</span>
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#a7f3d0' }}><LaptopOutlined /> Servidores (LED)</span>,
+    title: <span style={{ fontSize: '11px', color: '#166534' }}><LaptopOutlined /> Servidores</span>,
     dataIndex: 'pc_states',
     key: 'pc_states',
     width: 175,
@@ -320,7 +320,7 @@ const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
     render: renderPcStates
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#a7f3d0' }}><ExperimentOutlined /> RND Insc.</span>,
+    title: <span style={{ fontSize: '11px', color: '#166534' }}><ExperimentOutlined /> RND Insc.</span>,
     dataIndex: 'registration_rnd',
     key: 'registration_rnd',
     width: 105,
@@ -329,7 +329,7 @@ const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
     render: (val: number | null) => renderMutedMonospace(val, true, 4)
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#a7f3d0' }}>Tpo Insc. (min)</span>,
+    title: <span style={{ fontSize: '11px', color: '#166534' }}>Tpo Insc. (min)</span>,
     dataIndex: 'registration_time',
     key: 'registration_time',
     width: 120,
@@ -338,16 +338,16 @@ const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
     render: (val: number | null) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#a7f3d0' }}>Insc. Comp.</span>,
+    title: <span style={{ fontSize: '11px', color: '#166534' }}>Insc. Comp.</span>,
     dataIndex: 'registrations_completed',
     key: 'registrations_completed',
     width: 110,
     onHeaderCell: () => ({ className: 'header-col-computers' }),
     onCell: () => ({ className: 'cell-col-computers' }),
-    render: (val: number) => <Text style={{ color: '#34d399', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '11px' }}>{val}</Text>
+    render: (val: number) => <Text style={{ color: '#15803d', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '11px' }}>{val}</Text>
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#fde68a' }}><ExperimentOutlined /> RND Mant.</span>,
+    title: <span style={{ fontSize: '11px', color: '#92400e' }}><ExperimentOutlined /> RND Mant.</span>,
     dataIndex: 'maintenance_rnd',
     key: 'maintenance_rnd',
     width: 105,
@@ -356,7 +356,7 @@ const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
     render: (val: number | null) => renderMutedMonospace(val, true, 4)
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#fde68a' }}>Tpo Mant. (min)</span>,
+    title: <span style={{ fontSize: '11px', color: '#92400e' }}>Tpo Mant. (min)</span>,
     dataIndex: 'maintenance_time',
     key: 'maintenance_time',
     width: 120,
@@ -365,7 +365,7 @@ const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
     render: (val: number | null) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : renderMutedMonospace(null)
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#fde68a' }}><ExperimentOutlined /> RND Regreso Téc.</span>,
+    title: <span style={{ fontSize: '11px', color: '#92400e' }}><ExperimentOutlined /> RND Regreso Téc.</span>,
     dataIndex: 'technician_return_rnd',
     key: 'technician_return_rnd',
     width: 135,
@@ -374,7 +374,7 @@ const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
     render: (val: number | null) => renderMutedMonospace(val, true, 4)
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#fde68a' }}>Tpo Regreso Téc. (min)</span>,
+    title: <span style={{ fontSize: '11px', color: '#92400e' }}>Tpo Regreso Téc. (min)</span>,
     dataIndex: 'technician_return_time',
     key: 'technician_return_time',
     width: 145,

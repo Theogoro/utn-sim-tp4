@@ -22,13 +22,15 @@ const App = () => {
   return (
     <ConfigProvider
       theme={{
-        algorithm: theme.darkAlgorithm,
+        algorithm: theme.defaultAlgorithm,
         token: {
-          colorPrimary: '#818cf8',
-          colorBgBase: '#161c2e',
-          colorBgContainer: '#1f2538',
-          colorBgElevated: '#232a40',
-          colorBorder: 'rgba(148, 163, 184, 0.18)',
+          colorPrimary: '#2563eb',
+          colorBgBase: '#f6f8fb',
+          colorBgContainer: '#ffffff',
+          colorBgElevated: '#ffffff',
+          colorBorder: '#d9e2ec',
+          colorText: '#0f172a',
+          colorTextSecondary: '#334155',
           fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
           borderRadius: 10,
           fontSize: 14,

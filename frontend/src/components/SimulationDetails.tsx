@@ -48,12 +48,12 @@ const KpiCard = ({
     className="kpi-card"
     style={
       highlight
-        ? { background: 'linear-gradient(180deg, rgba(99,102,241,0.10), rgba(99,102,241,0.02))', borderColor: 'rgba(99,102,241,0.30)' }
+        ? { background: '#eff6ff', borderColor: '#bfdbfe' }
         : undefined
     }
   >
     <Statistic
-      title={<span style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500, letterSpacing: '0.02em' }}>{label}</span>}
+      title={<span style={{ color: '#64748b', fontSize: 12, fontWeight: 500, letterSpacing: 0 }}>{label}</span>}
       value={value}
       precision={precision}
       valueStyle={{ color, fontWeight: 700, fontSize: 24, letterSpacing: '-0.02em' }}
@@ -109,7 +109,7 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
   if (!simulationId) {
     return (
       <Card className="glass-panel" style={{ textAlign: 'center', padding: '48px 0' }}>
-        <Empty description={<span style={{ color: '#94a3b8' }}>Seleccione una simulación del historial para ver el análisis detallado.</span>} />
+        <Empty description={<span style={{ color: '#64748b' }}>Seleccione una simulación del historial para ver el análisis detallado.</span>} />
       </Card>
     );
   }
@@ -118,7 +118,7 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
     return (
       <Card className="glass-panel" style={{ textAlign: 'center', padding: '48px 0' }}>
         <Spin size="large" />
-        <div style={{ color: '#94a3b8', marginTop: 16 }}>Cargando análisis…</div>
+        <div style={{ color: '#64748b', marginTop: 16 }}>Cargando análisis…</div>
       </Card>
     );
   }
@@ -132,7 +132,7 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
           <KpiCard
             label="Inscripciones completadas"
             value={simulation.registrations_completed}
-            color="#34d399"
+            color="#15803d"
             icon={<CheckCircleOutlined />}
             caption="Inscripciones exitosas"
           />
@@ -143,7 +143,7 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
             value={simulation.avg_waiting_time / 60}
             precision={2}
             suffix=" min"
-            color="#c084fc"
+            color="#2563eb"
             icon={<HourglassOutlined />}
             caption={`${simulation.avg_waiting_time.toFixed(1)}s por alumno en cola`}
           />
@@ -154,7 +154,7 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
             value={simulation.pct_students_returned}
             precision={2}
             suffix="%"
-            color={simulation.pct_students_returned > 0 ? '#fb923c' : '#34d399'}
+            color={simulation.pct_students_returned > 0 ? '#b45309' : '#15803d'}
             icon={<UserDeleteOutlined />}
             caption={`${simulation.total_students_returned} de ${simulation.total_students_arrived} se retiraron`}
           />
@@ -165,7 +165,7 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
             value={simulation.avg_technician_idle_time / 60}
             precision={2}
             suffix=" min"
-            color="#a5b4fc"
+            color="#0369a1"
             icon={<ToolOutlined />}
             caption={`${simulation.avg_technician_idle_time.toFixed(1)}s por visita`}
           />
@@ -174,7 +174,7 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
           <KpiCard
             label="Visitas del técnico"
             value={simulation.total_technician_visits}
-            color="#818cf8"
+            color="#2563eb"
             icon={<TrophyOutlined />}
             caption="Rondas de mantenimiento"
             highlight
@@ -187,8 +187,8 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
           <Card
             className="glass-panel"
             title={
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#f1f5f9' }}>
-                <BarChartOutlined style={{ color: '#818cf8' }} />
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#0f172a' }}>
+                <BarChartOutlined style={{ color: '#2563eb' }} />
                 Utilización de Computadoras
               </span>
             }
@@ -197,22 +197,22 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
               <div style={{ width: '100%', height: 320 }}>
                 <ResponsiveContainer>
                   <BarChart data={pcUtilization} margin={{ top: 20, right: 24, left: 8, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.10)" />
-                    <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                    <YAxis stroke="#94a3b8" unit="%" tick={{ fontSize: 12 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="name" stroke="#64748b" tick={{ fontSize: 12 }} />
+                    <YAxis stroke="#64748b" unit="%" tick={{ fontSize: 12 }} />
                     <ChartTooltip
                       contentStyle={{
-                        backgroundColor: '#0f1320',
-                        border: '1px solid rgba(148, 163, 184, 0.15)',
-                        borderRadius: 10,
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #d9e2ec',
+                        borderRadius: 8,
+                        boxShadow: '0 8px 18px rgba(15,23,42,0.12)',
                       }}
-                      labelStyle={{ color: '#f1f5f9', fontWeight: 600 }}
+                      labelStyle={{ color: '#0f172a', fontWeight: 600 }}
                     />
-                    <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 12 }} />
-                    <Bar dataKey="Ocupado (%)" stackId="a" fill="#60a5fa" radius={[0, 0, 0, 0]} />
-                    <Bar dataKey="Mantenimiento (%)" stackId="a" fill="#fb923c" />
-                    <Bar dataKey="Libre (%)" stackId="a" fill="#34d399" radius={[4, 4, 0, 0]} />
+                    <Legend wrapperStyle={{ color: '#64748b', fontSize: 12 }} />
+                    <Bar dataKey="Ocupado (%)" stackId="a" fill="#2563eb" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="Mantenimiento (%)" stackId="a" fill="#d97706" />
+                    <Bar dataKey="Libre (%)" stackId="a" fill="#16a34a" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -226,8 +226,8 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
           <Card
             className="glass-panel"
             title={
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#f1f5f9' }}>
-                <SettingOutlined style={{ color: '#818cf8' }} />
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#0f172a' }}>
+                <SettingOutlined style={{ color: '#2563eb' }} />
                 Parámetros
               </span>
             }
@@ -235,7 +235,7 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div className="param-row">
-                <div className="param-row-label" style={{ color: '#818cf8' }}>
+                <div className="param-row-label" style={{ color: '#2563eb' }}>
                   <LaptopOutlined /> Sistema & tiempo
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -255,21 +255,21 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
               </div>
 
               <div className="param-row">
-                <div className="param-row-label" style={{ color: '#c084fc' }}>
+                <div className="param-row-label" style={{ color: '#2563eb' }}>
                   <TeamOutlined /> Llegadas & inscripción
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
                     <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4 }}>LLEGADAS (MEDIA)</div>
-                    <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <ClockCircleOutlined style={{ color: '#c084fc' }} />
+                    <div style={{ color: '#0f172a', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <ClockCircleOutlined style={{ color: '#2563eb' }} />
                       {simulation.mean_arrival_time} min
                     </div>
                   </div>
                   <div>
                     <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4 }}>INSCRIPCIÓN MÍN/MÁX</div>
-                    <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <HourglassOutlined style={{ color: '#c084fc' }} />
+                    <div style={{ color: '#0f172a', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <HourglassOutlined style={{ color: '#2563eb' }} />
                       {simulation.min_enrollment}–{simulation.max_enrollment} min
                     </div>
                   </div>
@@ -277,34 +277,34 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
               </div>
 
               <div className="param-row">
-                <div className="param-row-label" style={{ color: '#fb923c' }}>
+                <div className="param-row-label" style={{ color: '#b45309' }}>
                   <ToolOutlined /> Mantenimiento del técnico
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
                     <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4 }}>REGRESO (MEDIA)</div>
-                    <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <SyncOutlined style={{ color: '#fb923c' }} />
+                    <div style={{ color: '#0f172a', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <SyncOutlined style={{ color: '#b45309' }} />
                       {simulation.mean_technician_return_time} min
                     </div>
                   </div>
                   <div>
                     <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4 }}>VARIACIÓN ±</div>
-                    <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 13 }}>
+                    <div style={{ color: '#0f172a', fontWeight: 600, fontSize: 13 }}>
                       ± {simulation.technician_return_time_variation} min
                     </div>
                   </div>
                 </div>
-                <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(148,163,184,0.06)', fontSize: 11 }}>
+                <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #e5eaf0', fontSize: 11 }}>
                   <span style={{ color: '#64748b', marginRight: 6 }}>MANTENIMIENTO:</span>
-                  <span style={{ color: '#e2e8f0', fontWeight: 600 }}>
+                  <span style={{ color: '#0f172a', fontWeight: 600 }}>
                     {simulation.min_maintenance_time}–{simulation.max_maintenance_time} min
                   </span>
                 </div>
               </div>
 
               <div className="param-row">
-                <div className="param-row-label" style={{ color: '#f87171' }}>
+                <div className="param-row-label" style={{ color: '#b91c1c' }}>
                   <WarningOutlined /> Tolerancia del alumno
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -316,7 +316,7 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
                   </div>
                   <div>
                     <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4 }}>DEMORA RETORNO</div>
-                    <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 13, paddingTop: 2 }}>
+                    <div style={{ color: '#0f172a', fontWeight: 600, fontSize: 13, paddingTop: 2 }}>
                       {simulation.student_return_time} min
                     </div>
                   </div>
@@ -366,9 +366,9 @@ const SimulationDetails = ({ simulationId }: SimulationDetailsProps) => {
           onClick={handleExport}
           loading={exporting}
           style={{
-            background: 'rgba(34, 197, 94, 0.10)',
-            borderColor: 'rgba(34, 197, 94, 0.35)',
-            color: '#86efac',
+            background: '#ecfdf5',
+            borderColor: '#bbf7d0',
+            color: '#15803d',
             fontWeight: 500,
           }}
         >

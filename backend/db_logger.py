@@ -21,6 +21,7 @@ class DatabaseLoggerHandler:
 
     def trigger(self, event=None) -> None:
         row = build_row(self.state)
+        # La DB guarda snapshots JSON para que el vector no dependa de columnas fijas.
         line_payload = {
             "clock": row["clock"],
             "clock_formatted": row["clock_formatted"],
@@ -50,12 +51,14 @@ class DatabaseLoggerHandler:
             line_index=self.line_counter,
             **line_payload,
         ))
+        # Los alumnos finalizados se persisten apenas salen de memoria activa.
         self.flush_student_records()
         self.line_counter += 1
         if self.flush_every and self.line_counter % self.flush_every == 0:
             self.db.flush()
 
     def flush_student_records(self, include_active: bool = False) -> None:
+        """Persiste alumnos destruidos del motor; opcionalmente cierra los activos al final."""
         records = list(self.state.finalized_student_records)
         self.state.finalized_student_records.clear()
         if include_active:

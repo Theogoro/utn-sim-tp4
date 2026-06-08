@@ -85,11 +85,12 @@ def run_simulation(params_in: SimulationParamsCreate, db: Session = Depends(get_
         db.add(sim_model)
         db.flush()  # Asigna sim_model.id sin commitear todavía.
 
-        # 3. Correr simulación con logger que streamea líneas a la session.
+        # 3. Correr simulación con logger que streamea líneas y alumnos finalizados a la session.
         sim = Simulation(sim_params)
         logger = DatabaseLoggerHandler(sim.state, db, sim_model.id)
         sim.observers = [logger]
         final_state = sim.run(max_simulation_time)
+        # Al cortar por horizonte pueden quedar alumnos activos; se guardan como estado final parcial.
         logger.flush_student_records(include_active=True)
 
         # 4. Calcular estadísticas finales y actualizar sim_model.
@@ -198,6 +199,7 @@ def get_simulation_students(
     limit: int = Query(50, ge=1, le=1000, description="Items per page"),
     db: Session = Depends(get_db)
 ):
+    """Detalle historico por alumno, incluidos los que ya no viven en memoria."""
     sim = db.query(SimulationModel).filter(SimulationModel.id == simulation_id).first()
     if not sim:
         raise HTTPException(status_code=404, detail="Simulation not found")
@@ -322,6 +324,7 @@ def export_simulation_xlsx(simulation_id: int, db: Session = Depends(get_db)):
     ws_sum.column_dimensions["D"].width = 22
 
     # --- Sheet 2: Vector de Estados ---
+    # Mantiene el vector completo con snapshots JSON para PCs, encargado y alumnos activos.
     ws_vec = wb.create_sheet("Vector de Estados")
     line_headers = [
         "Fila", "Reloj (formato)", "Reloj (seg)", "Evento", "Cola",
@@ -375,6 +378,7 @@ def export_simulation_xlsx(simulation_id: int, db: Session = Depends(get_db)):
     ws_vec.freeze_panes = "A2"
 
     # --- Sheet 3: Detalle Alumnos ---
+    # Auditoría histórica: también incluye alumnos destruidos por inscripción o rechazo final.
     ws_students = wb.create_sheet("Detalle Alumnos")
     student_headers = [
         "Alumno", "Estado final", "Intentos", "Veces que volvió", "Espera total (seg)",

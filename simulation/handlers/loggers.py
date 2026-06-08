@@ -9,7 +9,9 @@ def format_time(seconds):
 
 
 def build_row(state) -> dict:
+    """Arma la fila del vector de estados consumida por consola, DB y API."""
     row = state.row
+    # Snapshots dinamicos: evitan atar el vector a una cantidad fija de PCs/alumnos.
     pc_snapshot = [pc.snapshot() for pc in state.pcs]
     active_students = [student.snapshot() for student in state.students_by_id.values()]
     queue_ids = list(state.queue_student_ids)

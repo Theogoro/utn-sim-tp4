@@ -23,6 +23,7 @@ EVENT_FIN_INSCRIPCION = "fin_inscripcion"
 EVENT_FIN_MANTENIMIENTO = "fin_mantenimiento"
 
 EVENT_PRIORITIES = {
+    # Los eventos que liberan recursos se resuelven antes que nuevas demandas en el mismo minuto.
     EVENT_FIN_INSCRIPCION: 0,
     EVENT_FIN_MANTENIMIENTO: 0,
     EVENT_INICIO_MANTENIMIENTO: 1,
@@ -54,6 +55,12 @@ class Row:
 
 @dataclass
 class PC:
+    """PC permanente de la sala.
+
+    Acumula tiempo de inscripción y mantenimiento para las métricas finales,
+    mientras el estado corto L/I/M alimenta el vector de estados.
+    """
+
     id: int
     state: str = PC_LIBRE
     current_student_id: Optional[int] = None
@@ -84,6 +91,12 @@ class PC:
 
 @dataclass
 class Alumno:
+    """Alumno activo o historizado durante la simulación.
+
+    Mientras puede generar eventos futuros vive en `students_by_id`; cuando
+    termina o se rechaza definitivamente, pasa a `finalized_student_records`.
+    """
+
     id: int
     state: str
     first_arrival_time: float
@@ -134,6 +147,8 @@ class Alumno:
 
 @dataclass
 class Encargado:
+    """Representa al encargado de mantenimiento en una visita activa."""
+
     state: str = ENCARGADO_ESPERANDO_MANTENIMIENTO
     pcs_pendientes_mantenimiento: List[int] = field(default_factory=list)
     esperando_desde: Optional[float] = None
@@ -159,14 +174,18 @@ class SimulationStats:
 
 
 class SimulationState:
+    """Estado mutable completo del motor de eventos discretos."""
+
     def __init__(self, num_servers: int = 6):
         self.current_time: float = 0.0
         self.event: str = "inicialización"
         self.params = None
 
+        # Objetos permanentes: se mantienen durante todo el horizonte simulado.
         self.pcs: List[PC] = [PC(id=i + 1) for i in range(num_servers)]
         self.servers = self.pcs
 
+        # Alumnos activos en memoria. El historial guarda referencias para auditoría local/tests.
         self.students_by_id: Dict[int, Alumno] = {}
         self.student_history: Dict[int, Alumno] = {}
         self.finalized_student_records: List[dict] = []
@@ -179,6 +198,7 @@ class SimulationState:
 
         self.stats = SimulationStats()
 
+        # FEL simplificada: próximos eventos escalares y heap para retornos de alumnos.
         self.next_student_arrival: Optional[float] = None
         self.next_maintenance_start: Optional[float] = None
         self.next_maintenance_complete: Optional[float] = None
@@ -204,6 +224,7 @@ class SimulationState:
         return student
 
     def finalize_student(self, student_id: int, final_state: str) -> None:
+        """Saca al alumno de memoria activa y deja listo su registro persistible."""
         student = self.students_by_id.pop(student_id, None)
         if student is None:
             return
@@ -228,6 +249,7 @@ class SimulationState:
             schedule_next_maintenance_start(self)
 
     def get_next_event(self) -> Optional[Event]:
+        """Construye candidatos desde la FEL y elige el mínimo por tiempo y prioridad."""
         candidates = []
         if self.next_student_arrival is not None:
             candidates.append((self.next_student_arrival, EVENT_PRIORITIES[EVENT_LLEGADA_ALUMNO], EVENT_LLEGADA_ALUMNO, None, None))

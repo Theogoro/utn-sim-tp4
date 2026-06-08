@@ -24,12 +24,11 @@ from simulation.handlers.event_handlers import (
 
 class Simulation:
     def __init__(self, params: SimulationParams, observers: Optional[List] = None) -> None:
-
         self.params = params
         self.state = SimulationState(params.num_pcs)
         self.state.params = params
 
-        # Aca hacemos la asociacion entre cada evento y su handler correspondiente
+        # Mapa interno de eventos: los nombres publicos se formatean al procesar cada evento.
         self._event_handlers = {
             EVENT_LLEGADA_ALUMNO: self._handle_student_arrival,
             EVENT_REGRESO_ALUMNO: self._handle_student_return,
@@ -42,7 +41,9 @@ class Simulation:
         if observers:
             for observer in observers:
                 self.observers.append(observer(self.state) if isinstance(observer, type) else observer)
+
     def run(self, max_time: float) -> SimulationState:
+        """Ejecuta el motor de eventos discretos hasta el horizonte indicado."""
         self.state.event = "inicialización"
         self.state.fresh_row()
         self.state.initialize_events(self.params)
@@ -58,6 +59,7 @@ class Simulation:
             self._event_handlers[event.type](event)
             self._notify_observers(event)
 
+        # Al cortar por horizonte, solo acumulamos tiempos; no cambiamos el estado visible final.
         for pc in self.state.pcs:
             pc.advance_clock(max_time)
 
@@ -68,6 +70,7 @@ class Simulation:
         return self.state
 
     def _notify_observers(self, event: Optional[Event]) -> None:
+        """Publica cada fila del vector a loggers, DB u otros observadores."""
         for observer in self.observers:
             observer.trigger(event)
 
@@ -98,6 +101,7 @@ class Simulation:
         if student is None:
             return
         self.state.stats.total_students_arrived += 1
+        # Si vuelve y la cola sigue llena, se registra el rechazo final y se destruye en memoria.
         admit_or_defer_student(self.state, student, schedule_return_when_full=False)
 
     def _handle_maintenance_start(self, event: Event) -> None:
@@ -122,6 +126,7 @@ class Simulation:
                 student.completed_registration_at = self.state.current_time
             self.state.finalize_student(student_id, "INSCRIPTO")
 
+        # La prioridad del encargado se aplica al liberar la PC, sin interrumpir inscripciones.
         if (
             self.state.encargado.state == ENCARGADO_ESPERANDO_PC
             and pc.id in self.state.encargado.pcs_pendientes_mantenimiento
