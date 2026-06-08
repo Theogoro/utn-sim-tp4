@@ -103,4 +103,15 @@ describe('StateVectorTable', () => {
 
     expect(screen.getByText('Línea 9')).toBeInTheDocument();
   });
+
+  it('marks table rows as buttons with accessible label', () => {
+    renderTable([
+      makeLine({
+        id: 4,
+        line_index: 11,
+      }),
+    ]);
+
+    expect(screen.getByRole('button', { name: 'Abrir detalle de línea 11' })).toBeInTheDocument();
+  });
 });
