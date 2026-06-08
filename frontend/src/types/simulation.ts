@@ -11,6 +11,7 @@ export interface SimulationParams {
   technician_return_time_variation: number;
   student_wait_threshold: number;
   student_return_time: number;
+  initial_maintenance_at_start: boolean;
   sim_hours: number;
 }
 
@@ -38,6 +39,25 @@ export interface SimulationLine {
   event_name: string;
   queue_length: number;
   pc_states: string;
+  pc_snapshot: Array<{ id: number; state: 'L' | 'I' | 'M' | string }>;
+  encargado_snapshot: {
+    state: string;
+    pcs_pendientes_mantenimiento: number[];
+    esperando_desde: number | null;
+  };
+  active_students_snapshot: Array<{
+    id: number;
+    state: string;
+    minuto_vuelta: number | null;
+    esperando_en_fila_desde: number | null;
+    attempts: number;
+    times_returned_later: number;
+    total_waiting_time: number;
+    first_arrival_time: number | null;
+    last_event_time: number | null;
+    completed_registration_at: number | null;
+  }>;
+  queue_student_ids: number[];
   student_rnd: number | null;
   student_arrival_time: number | null;
   student_next_arrival_time: number | null;
@@ -47,6 +67,8 @@ export interface SimulationLine {
   maintenance_time: number | null;
   technician_return_rnd: number | null;
   technician_return_time: number | null;
+  next_maintenance_start_time: number | null;
+  next_maintenance_complete_time: number | null;
   registrations_completed: number;
   total_students_returned: number;
 }
@@ -70,4 +92,25 @@ export interface PcUtilizationChartDatum {
   'Ocupado (%)': number;
   'Mantenimiento (%)': number;
   'Libre (%)': number;
+}
+
+export interface SimulationStudent {
+  id: number;
+  simulation_id: number;
+  student_id: number;
+  final_state: string;
+  attempts: number;
+  times_returned_later: number;
+  total_waiting_time: number;
+  first_arrival_time: number | null;
+  last_event_time: number | null;
+  return_time: number | null;
+  completed_registration_at: number | null;
+}
+
+export interface PaginatedSimulationStudents {
+  total: number;
+  page: number;
+  limit: number;
+  items: SimulationStudent[];
 }

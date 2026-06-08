@@ -17,12 +17,13 @@ def main():
         technician_return_time_variation=180,   # ±3 minutos (variación regreso técnico)
         student_wait_threshold=5,               # Umbral de cola > 5
         student_return_time=1800,               # 30 minutos (tiempo de retorno alumno)
+        initial_maintenance_at_start=True,
     )
 
     # 2. Inicializar y ejecutar la simulación
     # Pasamos el ConsoleLoggerHandler como observador para imprimir la tabla del vector de estados
     from simulation.handlers.loggers import ConsoleLoggerHandler
-    handlers = [ConsoleLoggerHandler]
+    observers = [ConsoleLoggerHandler]
     
     # Ejecutaremos por un período largo (ej. 30 días de simulación continua) para obtener estabilidad estadística
     sim_days = 1
@@ -32,7 +33,7 @@ def main():
     print(f" Iniciando Simulación del Sistema de Inscripción ({sim_days} días) ")
     print("="*60)
     
-    simulation = Simulation(params, handlers=handlers)
+    simulation = Simulation(params, observers=observers)
     final_state = simulation.run(max_simulation_time)
     
     # 3. Procesar y calcular métricas solicitadas

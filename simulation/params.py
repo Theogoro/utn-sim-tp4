@@ -24,3 +24,4 @@ class SimulationParams:
     technician_return_time_variation: float
     student_wait_threshold: int
     student_return_time: float
+    initial_maintenance_at_start: bool = True

@@ -8,6 +8,7 @@ import {
   LaptopOutlined,
   SettingOutlined,
   TeamOutlined,
+  ToolOutlined,
 } from '@ant-design/icons';
 import type { SimulationLine } from '../types/simulation';
 
@@ -23,10 +24,7 @@ const eventStyles: Record<string, EventStyle> = {
   inicialización: ['Inicialización', '#94a3b8', 'rgba(148, 163, 184, 0.08)', 'rgba(148, 163, 184, 0.25)'],
   inicio: ['Inicialización', '#94a3b8', 'rgba(148, 163, 184, 0.08)', 'rgba(148, 163, 184, 0.25)'],
   start: ['Inicialización', '#94a3b8', 'rgba(148, 163, 184, 0.08)', 'rgba(148, 163, 184, 0.25)'],
-  student_arrival: ['Llegada Alumno', '#c084fc', 'rgba(192, 132, 252, 0.08)', 'rgba(192, 132, 252, 0.25)'],
-  student_return: ['Retorno Alumno', '#22d3ee', 'rgba(34, 211, 238, 0.08)', 'rgba(34, 211, 238, 0.25)'],
-  technician_arrival: ['Llegada Técnico', '#fbbf24', 'rgba(251, 191, 36, 0.08)', 'rgba(251, 191, 36, 0.25)'],
-  maintenance_complete: ['Fin Mantenimiento', '#f97316', 'rgba(249, 115, 22, 0.08)', 'rgba(249, 115, 22, 0.25)'],
+  inicio_mantenimiento: ['Inicio Mantenimiento', '#fbbf24', 'rgba(251, 191, 36, 0.08)', 'rgba(251, 191, 36, 0.25)'],
 };
 
 type PcVisual = [statusText: string, ledColor: string, ledGlow: string, border: string, pulseClass: string];
@@ -35,6 +33,9 @@ const pcVisuals: Record<string, PcVisual> = {
   idle: ['LIBRE', '#10b981', '0 0 6px rgba(16, 185, 129, 0.75)', 'rgba(16, 185, 129, 0.15)', ''],
   busy: ['OCUPADO', '#3b82f6', '0 0 8px rgba(59, 130, 246, 0.85), 0 0 15px rgba(59, 130, 246, 0.4)', 'rgba(59, 130, 246, 0.2)', 'led-pulse-blue'],
   maintenance: ['MANTENIMIENTO', '#f59e0b', '0 0 8px rgba(245, 158, 11, 0.85), 0 0 15px rgba(245, 158, 11, 0.4)', 'rgba(245, 158, 11, 0.25)', 'led-pulse-orange'],
+  L: ['LIBRE', '#10b981', '0 0 6px rgba(16, 185, 129, 0.75)', 'rgba(16, 185, 129, 0.15)', ''],
+  I: ['INSCRIPCIÓN', '#3b82f6', '0 0 8px rgba(59, 130, 246, 0.85), 0 0 15px rgba(59, 130, 246, 0.4)', 'rgba(59, 130, 246, 0.2)', 'led-pulse-blue'],
+  M: ['MANTENIMIENTO', '#f59e0b', '0 0 8px rgba(245, 158, 11, 0.85), 0 0 15px rgba(245, 158, 11, 0.4)', 'rgba(245, 158, 11, 0.25)', 'led-pulse-orange'],
 };
 
 const renderMutedMonospace = (val: number | string | null | undefined, isRnd = false, decimals = 4, suffix = ''): ReactNode => {
@@ -60,11 +61,26 @@ const renderEvent = (evt: string): ReactNode => {
     'rgba(168, 85, 247, 0.2)',
   ];
 
-  if (evt?.startsWith('registration_complete_pc')) {
-    label = `Fin Inscripción PC ${evt.replace('registration_complete_pc', '')}`;
+  if (evt?.startsWith('fin_inscripcion PC')) {
+    label = evt.replace('fin_inscripcion', 'Fin Inscripción');
     color = '#34d399';
     bgColor = 'rgba(52, 211, 153, 0.08)';
     borderColor = 'rgba(52, 211, 153, 0.25)';
+  } else if (evt?.startsWith('fin_mantenimiento PC')) {
+    label = evt.replace('fin_mantenimiento', 'Fin Mantenimiento');
+    color = '#f97316';
+    bgColor = 'rgba(249, 115, 22, 0.08)';
+    borderColor = 'rgba(249, 115, 22, 0.25)';
+  } else if (evt?.startsWith('llegada_alumno')) {
+    label = evt.replace('llegada_alumno', 'Llegada Alumno');
+    color = '#c084fc';
+    bgColor = 'rgba(192, 132, 252, 0.08)';
+    borderColor = 'rgba(192, 132, 252, 0.25)';
+  } else if (evt?.startsWith('regreso_alumno')) {
+    label = evt.replace('regreso_alumno', 'Regreso Alumno');
+    color = '#22d3ee';
+    bgColor = 'rgba(34, 211, 238, 0.08)';
+    borderColor = 'rgba(34, 211, 238, 0.25)';
   }
 
   return (
@@ -82,6 +98,42 @@ const renderEvent = (evt: string): ReactNode => {
     }}>
       {label}
     </span>
+  );
+};
+
+const renderEncargado = (snapshot: SimulationLine['encargado_snapshot']): ReactNode => {
+  if (!snapshot) return renderMutedMonospace(null);
+  const pendientes = snapshot.pcs_pendientes_mantenimiento?.length
+    ? snapshot.pcs_pendientes_mantenimiento.join(',')
+    : '-';
+  return (
+    <span style={{ color: '#fde68a', fontFamily: 'monospace', fontSize: '11px', fontWeight: 700 }}>
+      {snapshot.state} <span style={{ color: '#64748b' }}>pend:</span> {pendientes}
+    </span>
+  );
+};
+
+const renderActiveStudents = (students: SimulationLine['active_students_snapshot']): ReactNode => {
+  if (!students?.length) return <span style={{ color: '#475569', fontFamily: 'monospace', fontSize: '11px' }}>-</span>;
+  const display = students.slice(0, 5).map(student => {
+    const wait = student.esperando_en_fila_desde !== null ? ` EF@${student.esperando_en_fila_desde.toFixed(2)}` : '';
+    const ret = student.minuto_vuelta !== null ? ` EV@${student.minuto_vuelta.toFixed(2)}` : '';
+    return `A${student.id}:${student.state} i${student.attempts} v${student.times_returned_later}${wait}${ret}`;
+  }).join(' · ');
+  const suffix = students.length > 5 ? ` +${students.length - 5}` : '';
+  const title = students.map(student => [
+    `Alumno ${student.id}`,
+    `Estado: ${student.state}`,
+    `Intentos: ${student.attempts}`,
+    `Veces que volvió: ${student.times_returned_later}`,
+    `Espera acumulada: ${(student.total_waiting_time / 60).toFixed(2)} min`,
+    student.minuto_vuelta !== null ? `Minuto de vuelta: ${student.minuto_vuelta.toFixed(2)}` : null,
+    student.esperando_en_fila_desde !== null ? `Esperando en fila desde: ${student.esperando_en_fila_desde.toFixed(2)}` : null,
+  ].filter(Boolean).join(' | ')).join('\n');
+  return (
+    <Tooltip title={title}>
+      <span style={{ color: '#c7d2fe', fontFamily: 'monospace', fontSize: '11px' }}>{display}{suffix}</span>
+    </Tooltip>
   );
 };
 
@@ -170,13 +222,22 @@ const renderPcStates = (pcStatesStr: string | null | undefined): ReactNode => {
 
 const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
   {
-    title: <span style={{ fontSize: '11px', color: '#64748b' }}>Fila</span>,
+    title: <span style={{ fontSize: '11px', color: '#64748b' }}>Índice</span>,
     dataIndex: 'line_index',
     key: 'line_index',
     width: 75,
     fixed: 'left',
     onHeaderCell: () => ({ className: 'header-col-general' }),
     render: (idx: number) => <Text style={{ color: '#475569', fontFamily: 'monospace', fontSize: '11px' }}>{idx}</Text>
+  },
+  {
+    title: <span style={{ fontSize: '11px', color: '#cbd5e1' }}><SettingOutlined /> Evento</span>,
+    dataIndex: 'event_name',
+    key: 'event_name',
+    width: 210,
+    fixed: 'left',
+    onHeaderCell: () => ({ className: 'header-col-general' }),
+    render: renderEvent
   },
   {
     title: <span style={{ fontSize: '11px', color: '#cbd5e1' }}><ClockCircleOutlined /> Reloj</span>,
@@ -188,20 +249,30 @@ const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
     render: (t: string) => <strong style={{ color: '#c084fc', fontFamily: 'monospace', fontSize: '11px' }}>{t}</strong>
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#cbd5e1' }}><SettingOutlined /> Evento</span>,
-    dataIndex: 'event_name',
-    key: 'event_name',
-    width: 210,
-    onHeaderCell: () => ({ className: 'header-col-general' }),
-    render: renderEvent
-  },
-  {
     title: <span style={{ fontSize: '11px', color: '#cbd5e1' }}><TeamOutlined /> Cola</span>,
     dataIndex: 'queue_length',
     key: 'queue_length',
     width: 75,
     onHeaderCell: () => ({ className: 'header-col-general' }),
     render: (len: number) => renderQueueLength(len, queueLimit)
+  },
+  {
+    title: <span style={{ fontSize: '11px', color: '#fde68a' }}><ToolOutlined /> Encargado</span>,
+    dataIndex: 'encargado_snapshot',
+    key: 'encargado_snapshot',
+    width: 185,
+    onHeaderCell: () => ({ className: 'header-col-maintenance' }),
+    onCell: () => ({ className: 'cell-col-maintenance' }),
+    render: renderEncargado
+  },
+  {
+    title: <span style={{ fontSize: '11px', color: '#c7d2fe' }}><TeamOutlined /> Detalle alumnos</span>,
+    dataIndex: 'active_students_snapshot',
+    key: 'active_students_snapshot',
+    width: 360,
+    onHeaderCell: () => ({ className: 'header-col-students' }),
+    onCell: () => ({ className: 'cell-col-students' }),
+    render: renderActiveStudents
   },
   {
     title: <span style={{ fontSize: '11px', color: '#c7d2fe' }}><ExperimentOutlined /> RND Lleg.</span>,

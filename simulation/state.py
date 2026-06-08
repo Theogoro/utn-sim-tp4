@@ -1,17 +1,33 @@
+import heapq
 from collections import deque
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Deque, Dict, List, Optional, Tuple
 
-from utils.random_generator import uniform, exponential
+from utils.random_generator import exponential
 
+
+PC_LIBRE = "L"
+PC_INSCRIPCION = "I"
+PC_MANTENIMIENTO = "M"
+
+ALUMNO_ESPERANDO_VOLVER = "EV"
+ALUMNO_ESPERANDO_FILA = "EF"
+
+ENCARGADO_ESPERANDO_MANTENIMIENTO = "EM"
+ENCARGADO_ESPERANDO_PC = "EPC"
+
+EVENT_INICIO_MANTENIMIENTO = "inicio_mantenimiento"
+EVENT_LLEGADA_ALUMNO = "llegada_alumno"
+EVENT_REGRESO_ALUMNO = "regreso_alumno"
+EVENT_FIN_INSCRIPCION = "fin_inscripcion"
+EVENT_FIN_MANTENIMIENTO = "fin_mantenimiento"
 
 EVENT_PRIORITIES = {
-    # Finished work releases capacity before new external demand at the same clock tick.
-    'maintenance_complete': 0,
-    'registration_complete': 0,
-    'technician_arrival': 1,
-    'student_arrival': 3,
-    'student_return': 3,
+    EVENT_FIN_INSCRIPCION: 0,
+    EVENT_FIN_MANTENIMIENTO: 0,
+    EVENT_INICIO_MANTENIMIENTO: 1,
+    EVENT_LLEGADA_ALUMNO: 3,
+    EVENT_REGRESO_ALUMNO: 3,
 }
 
 
@@ -20,6 +36,7 @@ class Event:
     time: float
     type: str
     pc_index: Optional[int] = None
+    student_id: Optional[int] = None
 
 
 @dataclass
@@ -36,130 +53,201 @@ class Row:
 
 
 @dataclass
-class ServerState:
+class PC:
     id: int
-    state: str = 'idle'  # 'idle', 'busy', 'maintenance'
+    state: str = PC_LIBRE
+    current_student_id: Optional[int] = None
     last_state_change: float = 0.0
     busy_time: float = 0.0
     maintenance_time: float = 0.0
 
-    def change_state(self, new_state: str, current_time: float):
-        """Cambia el estado de la PC y acumula el tiempo transcurrido en el estado anterior."""
+    def change_state(self, new_state: str, current_time: float) -> None:
         duration = current_time - self.last_state_change
-        if self.state == 'busy':
+        if self.state == PC_INSCRIPCION:
             self.busy_time += duration
-        elif self.state == 'maintenance':
+        elif self.state == PC_MANTENIMIENTO:
             self.maintenance_time += duration
-
         self.state = new_state
         self.last_state_change = current_time
 
-    def __repr__(self):
-        return f"Server(id={self.id}, state={self.state}, busy_time={self.busy_time:.1f}, maint_time={self.maintenance_time:.1f})"
+    def advance_clock(self, current_time: float) -> None:
+        duration = current_time - self.last_state_change
+        if self.state == PC_INSCRIPCION:
+            self.busy_time += duration
+        elif self.state == PC_MANTENIMIENTO:
+            self.maintenance_time += duration
+        self.last_state_change = current_time
+
+    def snapshot(self) -> dict:
+        return {"id": self.id, "state": self.state}
+
+
+@dataclass
+class Alumno:
+    id: int
+    state: str
+    first_arrival_time: float
+    last_event_time: float
+    attempts: int = 0
+    times_returned_later: int = 0
+    total_waiting_time: float = 0.0
+    waiting_started_at: Optional[float] = None
+    return_time: Optional[float] = None
+    completed_registration_at: Optional[float] = None
+    final_state: Optional[str] = None
+
+    @property
+    def minuto_vuelta(self) -> Optional[float]:
+        return self.return_time / 60.0 if self.return_time is not None else None
+
+    @property
+    def esperando_en_fila_desde(self) -> Optional[float]:
+        return self.waiting_started_at / 60.0 if self.waiting_started_at is not None else None
+
+    def snapshot(self) -> dict:
+        return {
+            "id": self.id,
+            "state": self.state,
+            "minuto_vuelta": self.minuto_vuelta,
+            "esperando_en_fila_desde": self.esperando_en_fila_desde,
+            "attempts": self.attempts,
+            "times_returned_later": self.times_returned_later,
+            "total_waiting_time": self.total_waiting_time,
+            "first_arrival_time": self.first_arrival_time,
+            "last_event_time": self.last_event_time,
+            "completed_registration_at": self.completed_registration_at,
+        }
+
+    def record(self) -> dict:
+        return {
+            "student_id": self.id,
+            "final_state": self.final_state or self.state,
+            "attempts": self.attempts,
+            "times_returned_later": self.times_returned_later,
+            "total_waiting_time": self.total_waiting_time,
+            "first_arrival_time": self.first_arrival_time,
+            "last_event_time": self.last_event_time,
+            "return_time": self.return_time,
+            "completed_registration_at": self.completed_registration_at,
+        }
+
+
+@dataclass
+class Encargado:
+    state: str = ENCARGADO_ESPERANDO_MANTENIMIENTO
+    pcs_pendientes_mantenimiento: List[int] = field(default_factory=list)
+    esperando_desde: Optional[float] = None
+
+    def snapshot(self) -> dict:
+        return {
+            "state": self.state,
+            "pcs_pendientes_mantenimiento": list(self.pcs_pendientes_mantenimiento),
+            "esperando_desde": self.esperando_desde,
+        }
 
 
 @dataclass
 class SimulationStats:
-    # Estadísticas de Alumnos
-    total_students_arrived: int = 0      # Total de intentos de arribo (incluyendo retornos)
-    total_new_students_arrived: int = 0  # Total de alumnos nuevos del flujo exponencial
-    total_students_returned: int = 0     # Intentos de alumnos que se retiraron porque la cola estaba llena
-    students_queued_and_waited: int = 0  # Alumnos que entraron en cola y esperaron un tiempo > 0
-    total_waiting_time: float = 0.0      # Sumatoria del tiempo de espera de alumnos que hicieron cola
-
-    # Inscripciones exitosas completadas
+    total_students_arrived: int = 0
+    total_new_students_arrived: int = 0
+    total_students_returned: int = 0
+    students_queued_and_waited: int = 0
+    total_waiting_time: float = 0.0
     registrations_completed: int = 0
-
-    # Estadísticas del Técnico de Sistemas
-    total_technician_visits: int = 0       # Cantidad de visitas de mantenimiento completadas (al terminar las 6 PCs)
-    total_technician_idle_time: float = 0.0  # Sumatoria del tiempo ocioso del técnico en visitas finalizadas
-
-    def __repr__(self):
-        return (f"Stats(arrived={self.total_students_arrived}, "
-                f"new_arrived={self.total_new_students_arrived}, "
-                f"returned={self.total_students_returned}, "
-                f"waited={self.students_queued_and_waited}, "
-                f"total_wait={self.total_waiting_time:.1f}, "
-                f"visits={self.total_technician_visits}, "
-                f"tech_idle={self.total_technician_idle_time:.1f})")
+    total_technician_visits: int = 0
+    total_technician_idle_time: float = 0.0
 
 
 class SimulationState:
     def __init__(self, num_servers: int = 6):
         self.current_time: float = 0.0
-        self.event: str = 'start'
+        self.event: str = "inicialización"
+        self.params = None
 
-        # Servidores (PCs)
-        self.servers: List[ServerState] = [ServerState(id=i + 1) for i in range(num_servers)]
+        self.pcs: List[PC] = [PC(id=i + 1) for i in range(num_servers)]
+        self.servers = self.pcs
 
-        # Cola de alumnos: tiempos de llegada de los alumnos en espera (FIFO)
-        self.queue = deque()
+        self.students_by_id: Dict[int, Alumno] = {}
+        self.student_history: Dict[int, Alumno] = {}
+        self.finalized_student_records: List[dict] = []
+        self.next_student_id: int = 1
+        self.queue_student_ids: Deque[int] = deque()
+        self.queue = self.queue_student_ids
 
-        # Estado del Técnico de Sistemas
-        self.technician_state: str = 'absent'  # 'absent', 'working', 'waiting'
-        self.technician_pcs_maintained: List[bool] = [False] * num_servers
-        self.technician_current_pc: Optional[int] = None
-        self.technician_visit_idle_start: float = 0.0
+        self.encargado = Encargado()
         self.technician_visit_idle_accumulated: float = 0.0
 
-        # Estadísticas acumuladas
         self.stats = SimulationStats()
 
-        # Planificación de Eventos Futuros (FEL - Future Event List)
         self.next_student_arrival: Optional[float] = None
-        self.next_technician_arrival: Optional[float] = None
+        self.next_maintenance_start: Optional[float] = None
         self.next_maintenance_complete: Optional[float] = None
         self.next_registration_complete: List[Optional[float]] = [None] * num_servers
-        self.student_returns: List[float] = []
+        self.student_return_events: List[Tuple[float, int]] = []
 
-        # Fila actual de auditoría (RNDs + tiempos sampleados)
         self.row: Row = Row()
 
     def fresh_row(self) -> None:
-        """Inicia una nueva fila vacía para auditar el evento que se va a procesar."""
         self.row = Row()
 
-    def initialize_events(self, params) -> None:
-        """Programa los eventos iniciales para arrancar la simulación."""
-        # Diferido para evitar import circular state ↔ event_handlers helpers.
-        from simulation.handlers.event_handlers import schedule_technician_return
+    def create_student(self, current_time: Optional[float] = None) -> Alumno:
+        now = self.current_time if current_time is None else current_time
+        student = Alumno(
+            id=self.next_student_id,
+            state="",
+            first_arrival_time=now,
+            last_event_time=now,
+        )
+        self.next_student_id += 1
+        self.students_by_id[student.id] = student
+        self.student_history[student.id] = student
+        return student
 
-        # 1. Primer arribo de alumno (exponencial con media 2' = 120s)
-        rnd, tpo = exponential(params.mean_arrival_time)
+    def finalize_student(self, student_id: int, final_state: str) -> None:
+        student = self.students_by_id.pop(student_id, None)
+        if student is None:
+            return
+        student.final_state = final_state
+        student.last_event_time = self.current_time
+        self.finalized_student_records.append(student.record())
+
+    def schedule_student_arrival(self) -> None:
+        rnd, tpo = exponential(self.params.mean_arrival_time)
         self.row.student_rnd = rnd
         self.row.student_arrival_time = tpo
         self.next_student_arrival = self.current_time + tpo
 
-        # 2. Primer arribo del técnico (1 hora ± 3')
-        schedule_technician_return(self)
+    def initialize_events(self, params) -> None:
+        self.params = params
+        self.schedule_student_arrival()
+        if params.initial_maintenance_at_start:
+            self.next_maintenance_start = self.current_time
+        else:
+            from simulation.handlers.event_handlers import schedule_next_maintenance_start
+
+            schedule_next_maintenance_start(self)
 
     def get_next_event(self) -> Optional[Event]:
-        """Busca y retorna el próximo evento programado."""
         candidates = []
-
         if self.next_student_arrival is not None:
-            candidates.append((self.next_student_arrival, EVENT_PRIORITIES['student_arrival'], 'student_arrival', None))
-
-        if self.next_technician_arrival is not None:
-            candidates.append((self.next_technician_arrival, EVENT_PRIORITIES['technician_arrival'], 'technician_arrival', None))
-
+            candidates.append((self.next_student_arrival, EVENT_PRIORITIES[EVENT_LLEGADA_ALUMNO], EVENT_LLEGADA_ALUMNO, None, None))
+        if self.next_maintenance_start is not None:
+            candidates.append((self.next_maintenance_start, EVENT_PRIORITIES[EVENT_INICIO_MANTENIMIENTO], EVENT_INICIO_MANTENIMIENTO, None, None))
         if self.next_maintenance_complete is not None:
-            candidates.append((self.next_maintenance_complete, EVENT_PRIORITIES['maintenance_complete'], 'maintenance_complete', None))
-
+            candidates.append((self.next_maintenance_complete, EVENT_PRIORITIES[EVENT_FIN_MANTENIMIENTO], EVENT_FIN_MANTENIMIENTO, None, None))
         for i, t in enumerate(self.next_registration_complete):
             if t is not None:
-                candidates.append((t, EVENT_PRIORITIES['registration_complete'], 'registration_complete', i))
-
-        if self.student_returns:
-            candidates.append((self.student_returns[0], EVENT_PRIORITIES['student_return'], 'student_return', None))
-
+                candidates.append((t, EVENT_PRIORITIES[EVENT_FIN_INSCRIPCION], EVENT_FIN_INSCRIPCION, i, None))
+        if self.student_return_events:
+            t, student_id = self.student_return_events[0]
+            candidates.append((t, EVENT_PRIORITIES[EVENT_REGRESO_ALUMNO], EVENT_REGRESO_ALUMNO, None, student_id))
         if not candidates:
             return None
+        time, _, event_type, pc_index, student_id = min(candidates, key=lambda x: (x[0], x[1]))
+        return Event(time=time, type=event_type, pc_index=pc_index, student_id=student_id)
 
-        time, _, event_type, pc_index = min(candidates, key=lambda x: (x[0], x[1]))
-        return Event(time=time, type=event_type, pc_index=pc_index)
+    def push_student_return(self, time: float, student_id: int) -> None:
+        heapq.heappush(self.student_return_events, (time, student_id))
 
-    def __repr__(self):
-        return (f"State(time={self.current_time:.1f}, event={self.event}, "
-                f"queue_len={len(self.queue)}, tech={self.technician_state}, "
-                f"servers={self.servers})")
+    def pop_student_return(self) -> Tuple[float, int]:
+        return heapq.heappop(self.student_return_events)

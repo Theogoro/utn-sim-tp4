@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type {
   PaginatedSimulationLines,
+  PaginatedSimulationStudents,
   PcUtilization,
   SimulationParams,
   SimulationSummary,
@@ -23,6 +24,12 @@ export const getSimulationLines = (id: number, { page, limit }: { page: number; 
 );
 
 export const getSimulationPcStats = (id: number) => axios.get<PcUtilization[]>(`${API_URL}/simulations/${id}/pc_stats`);
+
+export const getSimulationStudents = (id: number, { page, limit }: { page: number; limit: number }) => (
+  axios.get<PaginatedSimulationStudents>(`${API_URL}/simulations/${id}/students`, {
+    params: { page, limit },
+  })
+);
 
 export const exportSimulationXlsx = (id: number) => (
   axios.get<Blob>(`${API_URL}/simulations/${id}/export`, { responseType: 'blob' })

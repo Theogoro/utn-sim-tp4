@@ -1,4 +1,4 @@
-import { Form, InputNumber, Slider, Button, Card, Row, Col, Tooltip } from 'antd';
+import { Form, InputNumber, Slider, Button, Card, Row, Col, Tooltip, Switch } from 'antd';
 import type { SimulationParams } from '../types/simulation';
 import {
   PlayCircleOutlined,
@@ -24,6 +24,7 @@ const UTN_PRESETS: SimulationParams = {
   technician_return_time_variation: 3.0,
   student_wait_threshold: 5,
   student_return_time: 30.0,
+  initial_maintenance_at_start: true,
   sim_hours: 24.0,
 };
 
@@ -154,6 +155,15 @@ const SimulationForm = ({ onSubmit, loading }: SimulationFormProps) => {
                   </Form.Item>
                 </Col>
               </Row>
+
+              <Form.Item
+                name="initial_maintenance_at_start"
+                label={labelWithTip('Inicio mantenimiento', 'Si está activo, el encargado inicia mantenimiento en minuto 0 como en el Excel.')}
+                valuePropName="checked"
+                style={{ marginBottom: 14 }}
+              >
+                <Switch checkedChildren="Min 0" unCheckedChildren="Diferido" />
+              </Form.Item>
 
               <div className="subsection-title" style={{ marginTop: 4 }}>
                 <WarningOutlined style={{ color: '#f87171' }} /> Tolerancia & Retornos

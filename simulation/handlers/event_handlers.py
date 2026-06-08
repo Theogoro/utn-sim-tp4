@@ -1,106 +1,151 @@
-"""Pure helper functions used by Simulation's event-handler methods.
-
-Cada helper muta `state` in-place. No clases, no estado propio.
-Los handlers que disparan eventos viven como métodos de `Simulation`.
-"""
-
-import heapq
-
 from utils.random_generator import uniform
+
+from simulation.state import (
+    ALUMNO_ESPERANDO_FILA,
+    ALUMNO_ESPERANDO_VOLVER,
+    ENCARGADO_ESPERANDO_MANTENIMIENTO,
+    ENCARGADO_ESPERANDO_PC,
+    EVENT_FIN_MANTENIMIENTO,
+    PC_INSCRIPCION,
+    PC_LIBRE,
+    PC_MANTENIMIENTO,
+)
 
 
 def find_idle_pc(state):
-    for idx, pc in enumerate(state.servers):
-        if pc.state == 'idle':
+    for idx, pc in enumerate(state.pcs):
+        if pc.state == PC_LIBRE:
             return idx
     return None
 
 
-def find_unmaintained_pc(state):
-    """Primera PC que aún no recibió mantenimiento en esta visita."""
-    for idx, maintained in enumerate(state.technician_pcs_maintained):
-        if not maintained:
+def find_idle_pending_maintenance_pc(state):
+    for pc_id in state.encargado.pcs_pendientes_mantenimiento:
+        idx = pc_id - 1
+        if state.pcs[idx].state == PC_LIBRE:
             return idx
     return None
 
 
-def find_idle_unmaintained_pc(state):
-    """Primera PC libre que aún no recibió mantenimiento en esta visita."""
-    for idx, maintained in enumerate(state.technician_pcs_maintained):
-        if not maintained and state.servers[idx].state == 'idle':
-            return idx
-    return None
+def start_enrollment(state, pc_index: int, student_id: int):
+    student = state.students_by_id[student_id]
+    pc = state.pcs[pc_index]
+    pc.change_state(PC_INSCRIPCION, state.current_time)
+    pc.current_student_id = student_id
 
+    student.state = f"SI {pc.id}"
+    student.return_time = None
+    student.waiting_started_at = None
+    student.last_event_time = state.current_time
 
-def start_enrollment(state, pc_index: int):
-    """Asigna alumno a la PC: la pone busy, sortea duración y programa fin."""
-    params = state.params
-    state.servers[pc_index].change_state('busy', state.current_time)
-
-    rnd, dur = uniform(params.min_enrollment, params.max_enrollment)
+    rnd, dur = uniform(state.params.min_enrollment, state.params.max_enrollment)
     state.row.registration_rnd = rnd
     state.row.registration_time = dur
     state.next_registration_complete[pc_index] = state.current_time + dur
 
 
-def schedule_maintenance(state, pc_index: int):
-    """Pone PC en 'maintenance', sortea duración y programa fin del mantenimiento."""
-    params = state.params
-    state.servers[pc_index].change_state('maintenance', state.current_time)
-    state.technician_current_pc = pc_index
-    state.technician_state = 'working'
+def enqueue_student(state, student):
+    student.state = ALUMNO_ESPERANDO_FILA
+    student.waiting_started_at = state.current_time
+    student.return_time = None
+    student.last_event_time = state.current_time
+    state.queue_student_ids.append(student.id)
 
-    rnd, dur = uniform(params.min_maintenance_time, params.max_maintenance_time)
+
+def schedule_student_return(state, student):
+    state.stats.total_students_returned += 1
+    student.times_returned_later += 1
+    student.state = ALUMNO_ESPERANDO_VOLVER
+    student.waiting_started_at = None
+    student.return_time = state.current_time + state.params.student_return_time
+    student.last_event_time = state.current_time
+    state.push_student_return(student.return_time, student.id)
+
+
+def admit_or_defer_student(state, student, schedule_return_when_full: bool = True):
+    student.attempts += 1
+    student.last_event_time = state.current_time
+    free = find_idle_pc(state)
+
+    if free is not None and not (
+        state.encargado.state == ENCARGADO_ESPERANDO_PC
+        and state.pcs[free].id in state.encargado.pcs_pendientes_mantenimiento
+    ):
+        start_enrollment(state, free, student.id)
+    elif len(state.queue_student_ids) >= state.params.student_wait_threshold:
+        if schedule_return_when_full:
+            schedule_student_return(state, student)
+        else:
+            state.stats.total_students_returned += 1
+            student.times_returned_later += 1
+            state.finalize_student(student.id, "RECHAZADO")
+    else:
+        enqueue_student(state, student)
+
+
+def dequeue_and_start_enrollment(state, pc_index: int):
+    student_id = state.queue_student_ids.popleft()
+    student = state.students_by_id[student_id]
+    waited = state.current_time - (student.waiting_started_at or state.current_time)
+    student.total_waiting_time += waited
+    state.stats.students_queued_and_waited += 1
+    state.stats.total_waiting_time += waited
+    start_enrollment(state, pc_index, student_id)
+
+
+def schedule_maintenance(state, pc_index: int):
+    pc = state.pcs[pc_index]
+    pc.change_state(PC_MANTENIMIENTO, state.current_time)
+    pc.current_student_id = None
+    pc_id = pc.id
+    state.encargado.state = f"DM {pc_id}"
+    state.encargado.esperando_desde = None
+    if pc_id in state.encargado.pcs_pendientes_mantenimiento:
+        state.encargado.pcs_pendientes_mantenimiento.remove(pc_id)
+
+    rnd, dur = uniform(state.params.min_maintenance_time, state.params.max_maintenance_time)
     state.row.maintenance_rnd = rnd
     state.row.maintenance_time = dur
     state.next_maintenance_complete = state.current_time + dur
 
 
-def schedule_technician_return(state):
-    """Sortea el próximo arribo del técnico (uniforme alrededor de la media ± variación)."""
-    params = state.params
+def technician_take_pc_or_wait(state):
+    pc_index = find_idle_pending_maintenance_pc(state)
+    if pc_index is not None:
+        if state.encargado.state == ENCARGADO_ESPERANDO_PC and state.encargado.esperando_desde is not None:
+            state.technician_visit_idle_accumulated += state.current_time - state.encargado.esperando_desde
+        schedule_maintenance(state, pc_index)
+        return
+
+    state.encargado.state = ENCARGADO_ESPERANDO_PC
+    state.encargado.esperando_desde = state.current_time
+
+
+def start_maintenance_visit(state):
+    state.encargado.pcs_pendientes_mantenimiento = [pc.id for pc in state.pcs]
+    state.encargado.state = ENCARGADO_ESPERANDO_MANTENIMIENTO
+    state.encargado.esperando_desde = None
+    state.technician_visit_idle_accumulated = 0.0
+    state.next_maintenance_start = None
+    technician_take_pc_or_wait(state)
+
+
+def schedule_next_maintenance_start(state):
     rnd, ret = uniform(
-        params.mean_technician_return_time - params.technician_return_time_variation,
-        params.mean_technician_return_time + params.technician_return_time_variation,
+        state.params.mean_technician_return_time - state.params.technician_return_time_variation,
+        state.params.mean_technician_return_time + state.params.technician_return_time_variation,
     )
     state.row.technician_return_rnd = rnd
     state.row.technician_return_time = ret
-    state.next_technician_arrival = state.current_time + ret
+    state.next_maintenance_start = state.current_time + ret
 
 
-def schedule_student_return(state):
-    """El alumno se va por cola llena: programa su retorno futuro."""
-    params = state.params
-    state.stats.total_students_returned += 1
-    heapq.heappush(state.student_returns, state.current_time + params.student_return_time)
-
-
-def admit_or_defer_student(state):
-    """Asigna alumno a PC libre, lo encola, o lo manda a volver más tarde."""
-    params = state.params
-    free = find_idle_pc(state)
-
-    if free is not None:
-        start_enrollment(state, free)
-    elif len(state.queue) >= params.student_wait_threshold:
-        schedule_student_return(state)
-    else:
-        state.queue.append(state.current_time)
-
-
-def dequeue_and_start_enrollment(state, pc_index: int):
-    """Saca primer alumno de la cola, acumula su tiempo de espera y empieza inscripción."""
-    arrival_time = state.queue.popleft()
-    state.stats.students_queued_and_waited += 1
-    state.stats.total_waiting_time += state.current_time - arrival_time
-    start_enrollment(state, pc_index)
-
-
-def technician_take_pc_or_wait(state):
-    """Tras liberarse una PC (o al arribar): el técnico toma la próxima libre sin mantener, o espera."""
-    free = find_idle_unmaintained_pc(state)
-    if free is not None:
-        schedule_maintenance(state, free)
-    else:
-        state.technician_state = 'waiting'
-        state.technician_visit_idle_start = state.current_time
+def finish_maintenance_visit_if_done(state) -> bool:
+    if state.encargado.pcs_pendientes_mantenimiento:
+        return False
+    state.stats.total_technician_visits += 1
+    state.stats.total_technician_idle_time += state.technician_visit_idle_accumulated
+    state.encargado.state = ENCARGADO_ESPERANDO_MANTENIMIENTO
+    state.encargado.esperando_desde = None
+    schedule_next_maintenance_start(state)
+    return True

@@ -1,5 +1,4 @@
 def format_time(seconds):
-    """Convierte un instante en segundos al formato hh:mm:ss."""
     if seconds is None:
         return ""
     total_secs = int(seconds)
@@ -10,14 +9,20 @@ def format_time(seconds):
 
 
 def build_row(state) -> dict:
-    """Vector de estado del paso actual en forma de dict. Consumido por todos los loggers."""
     row = state.row
+    pc_snapshot = [pc.snapshot() for pc in state.pcs]
+    active_students = [student.snapshot() for student in state.students_by_id.values()]
+    queue_ids = list(state.queue_student_ids)
     return {
         "clock": state.current_time,
         "clock_formatted": format_time(state.current_time),
         "event_name": state.event,
-        "queue_length": len(state.queue),
-        "pc_states": ",".join(pc.state for pc in state.servers),
+        "queue_length": len(queue_ids),
+        "pc_states": ",".join(pc["state"] for pc in pc_snapshot),
+        "pc_snapshot": pc_snapshot,
+        "encargado_snapshot": state.encargado.snapshot(),
+        "active_students_snapshot": active_students,
+        "queue_student_ids": queue_ids,
         "student_rnd": row.student_rnd,
         "student_arrival_time": row.student_arrival_time,
         "student_next_arrival_time": state.next_student_arrival,
@@ -27,6 +32,8 @@ def build_row(state) -> dict:
         "maintenance_time": row.maintenance_time,
         "technician_return_rnd": row.technician_return_rnd,
         "technician_return_time": row.technician_return_time,
+        "next_maintenance_start_time": state.next_maintenance_start,
+        "next_maintenance_complete_time": state.next_maintenance_complete,
         "registrations_completed": state.stats.registrations_completed,
         "total_students_returned": state.stats.total_students_returned,
     }
@@ -40,13 +47,6 @@ def _fmt_secs(v):
     return f"{v:.1f}s" if v is not None else ""
 
 
-def _fmt_clock(v):
-    return format_time(v) if v is not None else ""
-
-
-_PC_LETTER = {'idle': 'I', 'busy': 'B', 'maintenance': 'M'}
-
-
 class ConsoleLoggerHandler:
     def __init__(self, state, limit: int = 50):
         self.state = state
@@ -57,49 +57,37 @@ class ConsoleLoggerHandler:
     def trigger(self, event=None):
         if self.counter >= self.limit:
             return
-
         if not self.header_printed:
             self._print_header()
             self.header_printed = True
 
         r = build_row(self.state)
-        pc_str = " | ".join(_PC_LETTER[s] for s in r["pc_states"].split(","))
-
         print(
             f"{r['clock_formatted']:>9} | "
-            f"{r['event_name'][:25]:<25} | "
+            f"{r['event_name'][:28]:<28} | "
             f"{r['queue_length']:>4} | "
-            f"{pc_str} | "
+            f"{r['pc_states']:<17} | "
+            f"{r['encargado_snapshot']['state']:<8} | "
+            f"{','.join(map(str, r['encargado_snapshot']['pcs_pendientes_mantenimiento'])):<12} | "
             f"{_fmt_rnd(r['student_rnd']):>8} | "
             f"{_fmt_secs(r['student_arrival_time']):>8} | "
-            f"{_fmt_clock(r['student_next_arrival_time']):>8} | "
             f"{_fmt_rnd(r['registration_rnd']):>8} | "
             f"{_fmt_secs(r['registration_time']):>8} | "
             f"{_fmt_rnd(r['maintenance_rnd']):>8} | "
             f"{_fmt_secs(r['maintenance_time']):>8} | "
-            f"{_fmt_rnd(r['technician_return_rnd']):>8} | "
-            f"{_fmt_secs(r['technician_return_time']):>8} | "
             f"{r['registrations_completed']:>9} | "
             f"{r['total_students_returned']:>6}"
         )
-
         self.counter += 1
-        if self.counter == self.limit:
-            print("=" * 174)
-            print("... [El resto de la simulación se ejecuta en segundo plano para estabilidad estadística] ...")
-            print("=" * 174)
 
     def _print_header(self):
-        print("\n" + "=" * 174)
-        print("|                                           TABLA DE VECTOR DE ESTADOS DE SIMULACIÓN (CON AUDITORÍA DE RNDs)                                         |")
-        print("=" * 174)
+        print("\n" + "=" * 160)
+        print("|                         TABLA DE VECTOR DE ESTADOS DE SIMULACIÓN                         |")
+        print("=" * 160)
         print(
-            f"{'Reloj':>9} | {'Evento':<25} | {'Cola':>4} | "
-            f"{'PC1 | PC2 | PC3 | PC4 | PC5 | PC6'} | "
-            f"{'RND Lleg':>8} | {'Tpo Lleg':>8} | {'Prox Llg':>8} | "
-            f"{'RND Insc':>8} | {'Tpo Insc':>8} | "
-            f"{'RND Mant':>8} | {'Tpo Mant':>8} | "
-            f"{'RND RegT':>8} | {'Tpo RegT':>8} | "
+            f"{'Reloj':>9} | {'Evento':<28} | {'Cola':>4} | {'PCs':<17} | "
+            f"{'Encarg.':<8} | {'Pendientes':<12} | {'RND Lleg':>8} | {'Tpo Lleg':>8} | "
+            f"{'RND Insc':>8} | {'Tpo Insc':>8} | {'RND Mant':>8} | {'Tpo Mant':>8} | "
             f"{'InscComp':>9} | {'Rechaz':>6}"
         )
-        print("-" * 174)
+        print("-" * 160)

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, model_validator
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 class SimulationParamsCreate(BaseModel):
     num_pcs: int = Field(default=6, ge=1, description="Number of enrollment PCs")
@@ -15,6 +15,7 @@ class SimulationParamsCreate(BaseModel):
     technician_return_time_variation: float = Field(default=3.0, ge=0.0, description="Technician return time variation +/- (minutes)")
     student_wait_threshold: int = Field(default=5, ge=0, description="Max students waiting in queue before turning back")
     student_return_time: float = Field(default=30.0, ge=0.1, description="Return time for turned-back students (minutes)")
+    initial_maintenance_at_start: bool = Field(default=True, description="Start maintenance at minute 0")
     sim_hours: float = Field(default=24.0, ge=0.1, le=720.0, description="Duration of simulation in hours")
 
     @model_validator(mode="after")
@@ -39,6 +40,10 @@ class SimulationLineResponse(BaseModel):
     event_name: str
     queue_length: int
     pc_states: str
+    pc_snapshot: List[Dict[str, Any]]
+    encargado_snapshot: Dict[str, Any]
+    active_students_snapshot: List[Dict[str, Any]]
+    queue_student_ids: List[int]
     
     student_rnd: Optional[float] = None
     student_arrival_time: Optional[float] = None
@@ -52,6 +57,8 @@ class SimulationLineResponse(BaseModel):
     
     technician_return_rnd: Optional[float] = None
     technician_return_time: Optional[float] = None
+    next_maintenance_start_time: Optional[float] = None
+    next_maintenance_complete_time: Optional[float] = None
     
     registrations_completed: int
     total_students_returned: int
@@ -77,6 +84,7 @@ class SimulationResponse(BaseModel):
     technician_return_time_variation: float
     student_wait_threshold: int
     student_return_time: float
+    initial_maintenance_at_start: bool
     sim_days: float
     sim_hours: Optional[float] = None
 
@@ -92,6 +100,23 @@ class SimulationResponse(BaseModel):
     avg_waiting_time: float
     avg_technician_idle_time: float
     pc_utilization: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class SimulationStudentResponse(BaseModel):
+    id: int
+    simulation_id: int
+    student_id: int
+    final_state: str
+    attempts: int
+    times_returned_later: int
+    total_waiting_time: float
+    first_arrival_time: Optional[float] = None
+    last_event_time: Optional[float] = None
+    return_time: Optional[float] = None
+    completed_registration_at: Optional[float] = None
 
     class Config:
         from_attributes = True

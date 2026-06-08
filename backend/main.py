@@ -11,8 +11,8 @@ from sqlalchemy.orm import Session
 from typing import List, Dict, Any
 
 from backend.database import engine, Base, get_db
-from backend.models import SimulationModel, SimulationLineModel
-from backend.schemas import SimulationParamsCreate, SimulationResponse, SimulationLineResponse
+from backend.models import SimulationModel, SimulationLineModel, SimulationStudentModel
+from backend.schemas import SimulationParamsCreate, SimulationResponse, SimulationLineResponse, SimulationStudentResponse
 from backend.db_logger import DatabaseLoggerHandler
 
 from simulation.params import SimulationParams
@@ -59,7 +59,8 @@ def run_simulation(params_in: SimulationParamsCreate, db: Session = Depends(get_
             mean_technician_return_time=params_in.mean_technician_return_time * 60.0,
             technician_return_time_variation=params_in.technician_return_time_variation * 60.0,
             student_wait_threshold=params_in.student_wait_threshold,
-            student_return_time=params_in.student_return_time * 60.0
+            student_return_time=params_in.student_return_time * 60.0,
+            initial_maintenance_at_start=params_in.initial_maintenance_at_start,
         )
         max_simulation_time = params_in.sim_hours * 3600
 
@@ -78,6 +79,7 @@ def run_simulation(params_in: SimulationParamsCreate, db: Session = Depends(get_
             technician_return_time_variation=params_in.technician_return_time_variation,
             student_wait_threshold=params_in.student_wait_threshold,
             student_return_time=params_in.student_return_time,
+            initial_maintenance_at_start=params_in.initial_maintenance_at_start,
             sim_days=params_in.sim_hours / 24.0,
         )
         db.add(sim_model)
@@ -86,8 +88,9 @@ def run_simulation(params_in: SimulationParamsCreate, db: Session = Depends(get_
         # 3. Correr simulación con logger que streamea líneas a la session.
         sim = Simulation(sim_params)
         logger = DatabaseLoggerHandler(sim.state, db, sim_model.id)
-        sim.handlers = [logger]
+        sim.observers = [logger]
         final_state = sim.run(max_simulation_time)
+        logger.flush_student_records(include_active=True)
 
         # 4. Calcular estadísticas finales y actualizar sim_model.
         stats = final_state.stats
@@ -184,7 +187,30 @@ def get_simulation_lines(
         "total": total_count,
         "page": page,
         "limit": limit,
-        "items": [SimulationLineResponse.from_orm(item) for item in items]
+        "items": [SimulationLineResponse.model_validate(item) for item in items]
+    }
+
+
+@app.get("/api/simulations/{simulation_id}/students")
+def get_simulation_students(
+    simulation_id: int,
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(50, ge=1, le=1000, description="Items per page"),
+    db: Session = Depends(get_db)
+):
+    sim = db.query(SimulationModel).filter(SimulationModel.id == simulation_id).first()
+    if not sim:
+        raise HTTPException(status_code=404, detail="Simulation not found")
+
+    query = db.query(SimulationStudentModel).filter(SimulationStudentModel.simulation_id == simulation_id)
+    total_count = query.count()
+    offset = (page - 1) * limit
+    items = query.order_by(SimulationStudentModel.student_id.asc()).offset(offset).limit(limit).all()
+    return {
+        "total": total_count,
+        "page": page,
+        "limit": limit,
+        "items": [SimulationStudentResponse.model_validate(item) for item in items],
     }
 
 
@@ -244,6 +270,7 @@ def export_simulation_xlsx(simulation_id: int, db: Session = Depends(get_db)):
             ("Variación regreso técnico ± (min)", sim.technician_return_time_variation),
             ("Límite cola alumnos", sim.student_wait_threshold),
             ("Demora retorno alumno (min)", sim.student_return_time),
+            ("Mantenimiento inicial en minuto 0", "Sí" if sim.initial_maintenance_at_start else "No"),
             ("Tiempo simulado (días)", sim.sim_days),
             ("Tiempo simulado (horas)", round(sim.sim_days * 24, 2)),
         ]),
@@ -299,10 +326,10 @@ def export_simulation_xlsx(simulation_id: int, db: Session = Depends(get_db)):
     line_headers = [
         "Fila", "Reloj (formato)", "Reloj (seg)", "Evento", "Cola",
         "RND Llegada", "Tpo Llegada (seg)", "Próx. Llegada (seg)", "Alumnos Rechazados",
-        "Estados PCs",
+        "Estados PCs", "Snapshot PCs", "Encargado", "Cola IDs", "Detalle alumnos activos",
         "RND Inscripción", "Tpo Inscripción (seg)", "Inscripciones Completadas",
         "RND Mantenimiento", "Tpo Mantenimiento (seg)",
-        "RND Regreso Técnico", "Tpo Regreso Técnico (seg)",
+        "RND Regreso Técnico", "Tpo Regreso Técnico (seg)", "Próx. Mantenimiento (seg)", "Fin Mantenimiento (seg)",
     ]
     for i, h in enumerate(line_headers, start=1):
         c = ws_vec.cell(row=1, column=i, value=h)
@@ -327,19 +354,58 @@ def export_simulation_xlsx(simulation_id: int, db: Session = Depends(get_db)):
         ws_vec.cell(row=row, column=8, value=ln.student_next_arrival_time)
         ws_vec.cell(row=row, column=9, value=ln.total_students_returned)
         ws_vec.cell(row=row, column=10, value=ln.pc_states)
-        ws_vec.cell(row=row, column=11, value=ln.registration_rnd)
-        ws_vec.cell(row=row, column=12, value=ln.registration_time)
-        ws_vec.cell(row=row, column=13, value=ln.registrations_completed)
-        ws_vec.cell(row=row, column=14, value=ln.maintenance_rnd)
-        ws_vec.cell(row=row, column=15, value=ln.maintenance_time)
-        ws_vec.cell(row=row, column=16, value=ln.technician_return_rnd)
-        ws_vec.cell(row=row, column=17, value=ln.technician_return_time)
+        ws_vec.cell(row=row, column=11, value=ln.pc_snapshot_json)
+        ws_vec.cell(row=row, column=12, value=ln.encargado_snapshot_json)
+        ws_vec.cell(row=row, column=13, value=ln.queue_student_ids_json)
+        ws_vec.cell(row=row, column=14, value=ln.active_students_snapshot_json)
+        ws_vec.cell(row=row, column=15, value=ln.registration_rnd)
+        ws_vec.cell(row=row, column=16, value=ln.registration_time)
+        ws_vec.cell(row=row, column=17, value=ln.registrations_completed)
+        ws_vec.cell(row=row, column=18, value=ln.maintenance_rnd)
+        ws_vec.cell(row=row, column=19, value=ln.maintenance_time)
+        ws_vec.cell(row=row, column=20, value=ln.technician_return_rnd)
+        ws_vec.cell(row=row, column=21, value=ln.technician_return_time)
+        ws_vec.cell(row=row, column=22, value=ln.next_maintenance_start_time)
+        ws_vec.cell(row=row, column=23, value=ln.next_maintenance_complete_time)
         row += 1
 
-    widths = [8, 14, 12, 28, 8, 12, 14, 16, 14, 30, 14, 16, 16, 14, 16, 16, 18]
+    widths = [8, 14, 12, 28, 8, 12, 14, 16, 14, 16, 36, 42, 18, 50, 14, 16, 16, 14, 16, 16, 18, 20, 20]
     for i, w in enumerate(widths, start=1):
         ws_vec.column_dimensions[ws_vec.cell(row=1, column=i).column_letter].width = w
     ws_vec.freeze_panes = "A2"
+
+    # --- Sheet 3: Detalle Alumnos ---
+    ws_students = wb.create_sheet("Detalle Alumnos")
+    student_headers = [
+        "Alumno", "Estado final", "Intentos", "Veces que volvió", "Espera total (seg)",
+        "Primera llegada (seg)", "Último evento (seg)", "Minuto de vuelta (seg)",
+        "Inscripción completada (seg)",
+    ]
+    for i, h in enumerate(student_headers, start=1):
+        c = ws_students.cell(row=1, column=i, value=h)
+        c.font = header_font
+        c.fill = header_fill
+        c.alignment = Alignment(horizontal="center")
+
+    row = 2
+    student_q = db.query(SimulationStudentModel)\
+        .filter(SimulationStudentModel.simulation_id == simulation_id)\
+        .order_by(SimulationStudentModel.student_id.asc())\
+        .yield_per(1000)
+    for student in student_q:
+        ws_students.cell(row=row, column=1, value=student.student_id)
+        ws_students.cell(row=row, column=2, value=student.final_state)
+        ws_students.cell(row=row, column=3, value=student.attempts)
+        ws_students.cell(row=row, column=4, value=student.times_returned_later)
+        ws_students.cell(row=row, column=5, value=student.total_waiting_time)
+        ws_students.cell(row=row, column=6, value=student.first_arrival_time)
+        ws_students.cell(row=row, column=7, value=student.last_event_time)
+        ws_students.cell(row=row, column=8, value=student.return_time)
+        ws_students.cell(row=row, column=9, value=student.completed_registration_at)
+        row += 1
+    for i, w in enumerate([10, 18, 10, 16, 18, 20, 18, 18, 24], start=1):
+        ws_students.column_dimensions[ws_students.cell(row=1, column=i).column_letter].width = w
+    ws_students.freeze_panes = "A2"
 
     buf = io.BytesIO()
     wb.save(buf)

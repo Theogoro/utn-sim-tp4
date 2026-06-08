@@ -1,5 +1,6 @@
 import datetime
-from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey, Text
+import json
+from sqlalchemy import Boolean, Column, Integer, Float, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from backend.database import Base
 
@@ -22,6 +23,7 @@ class SimulationModel(Base):
     technician_return_time_variation = Column(Float, nullable=False)
     student_wait_threshold = Column(Integer, nullable=False)
     student_return_time = Column(Float, nullable=False)
+    initial_maintenance_at_start = Column(Boolean, default=True, nullable=False)
     sim_days = Column(Float, nullable=False)
 
     # General Output Stats
@@ -39,6 +41,7 @@ class SimulationModel(Base):
 
     # Relationship to Lines
     lines = relationship("SimulationLineModel", back_populates="simulation", cascade="all, delete-orphan")
+    students = relationship("SimulationStudentModel", back_populates="simulation", cascade="all, delete-orphan")
 
     @property
     def sim_hours(self) -> float:
@@ -61,6 +64,10 @@ class SimulationLineModel(Base):
     
     # Server states joined by commas (e.g., "idle,busy,busy,maintenance,idle,idle")
     pc_states = Column(Text, nullable=False)
+    pc_snapshot_json = Column(Text, nullable=False)
+    encargado_snapshot_json = Column(Text, nullable=False)
+    active_students_snapshot_json = Column(Text, nullable=False)
+    queue_student_ids_json = Column(Text, nullable=False)
 
     # RNDs and times
     student_rnd = Column(Float, nullable=True)
@@ -75,6 +82,8 @@ class SimulationLineModel(Base):
     
     technician_return_rnd = Column(Float, nullable=True)
     technician_return_time = Column(Float, nullable=True)
+    next_maintenance_start_time = Column(Float, nullable=True)
+    next_maintenance_complete_time = Column(Float, nullable=True)
 
     # Accumulators on the current row
     registrations_completed = Column(Integer, default=0)
@@ -82,3 +91,37 @@ class SimulationLineModel(Base):
 
     # Back relation
     simulation = relationship("SimulationModel", back_populates="lines")
+
+    @property
+    def pc_snapshot(self):
+        return json.loads(self.pc_snapshot_json or "[]")
+
+    @property
+    def encargado_snapshot(self):
+        return json.loads(self.encargado_snapshot_json or "{}")
+
+    @property
+    def active_students_snapshot(self):
+        return json.loads(self.active_students_snapshot_json or "[]")
+
+    @property
+    def queue_student_ids(self):
+        return json.loads(self.queue_student_ids_json or "[]")
+
+
+class SimulationStudentModel(Base):
+    __tablename__ = "simulation_students"
+
+    id = Column(Integer, primary_key=True, index=True)
+    simulation_id = Column(Integer, ForeignKey("simulations.id", ondelete="CASCADE"), nullable=False)
+    student_id = Column(Integer, nullable=False, index=True)
+    final_state = Column(String(50), nullable=False)
+    attempts = Column(Integer, default=0)
+    times_returned_later = Column(Integer, default=0)
+    total_waiting_time = Column(Float, default=0.0)
+    first_arrival_time = Column(Float, nullable=True)
+    last_event_time = Column(Float, nullable=True)
+    return_time = Column(Float, nullable=True)
+    completed_registration_at = Column(Float, nullable=True)
+
+    simulation = relationship("SimulationModel", back_populates="students")
