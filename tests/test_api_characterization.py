@@ -88,7 +88,9 @@ def test_list_simulations_returns_list_newest_first(client):
     assert isinstance(data, list)
     ids = [row["id"] for row in data]
     assert {first["id"], second["id"]}.issubset(set(ids))
-    assert ids == sorted(ids, reverse=True)
+    # Endpoint orders by created_at desc; assert that contract directly (robust to id/timestamp ties).
+    created = [row["created_at"] for row in data]
+    assert created == sorted(created, reverse=True)
 
 
 def test_get_simulation_by_id_and_404(client):
