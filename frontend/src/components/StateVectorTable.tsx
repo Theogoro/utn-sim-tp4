@@ -11,6 +11,7 @@ import {
   ToolOutlined,
 } from '@ant-design/icons';
 import type { SimulationLine } from '../types/simulation';
+import { describeEncargadoState, describeStudentState } from '../utils/stateLabels';
 import { SimulationLineDrawer } from './SimulationLineDrawer';
 
 const { Text } = Typography;
@@ -106,9 +107,13 @@ const renderEncargado = (snapshot: SimulationLine['encargado_snapshot']): ReactN
   const pendientes = snapshot.pcs_pendientes_mantenimiento?.length
     ? snapshot.pcs_pendientes_mantenimiento.join(',')
     : '-';
+  const { description } = describeEncargadoState(snapshot.state);
   return (
     <span style={{ color: '#92400e', fontFamily: 'monospace', fontSize: '11px', fontWeight: 700 }}>
-      {snapshot.state} <span style={{ color: '#64748b' }}>pend:</span> {pendientes}
+      <Tooltip title={description} mouseEnterDelay={0.05}>
+        <span style={{ cursor: 'help', borderBottom: '1px dotted #d6a96b' }}>{snapshot.state}</span>
+      </Tooltip>{' '}
+      <span style={{ color: '#64748b' }}>pend:</span> {pendientes}
     </span>
   );
 };
@@ -129,6 +134,36 @@ const renderStudentColumn = (
           {getValue(student)}
         </span>
       ))}
+    </div>
+  );
+};
+
+const renderStudentStates = (students: SimulationLine['active_students_snapshot']): ReactNode => {
+  if (!students?.length) {
+    return <span style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: '11px' }}>-</span>;
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {students.map(student => {
+        const { description } = describeStudentState(student.state);
+        return (
+          <Tooltip key={student.id} title={description} mouseEnterDelay={0.05}>
+            <span style={{
+              color: '#1d4ed8',
+              fontFamily: 'monospace',
+              fontSize: '11px',
+              lineHeight: 1.35,
+              whiteSpace: 'nowrap',
+              cursor: 'help',
+              borderBottom: '1px dotted #93b4f5',
+              width: 'fit-content',
+            }}>
+              {student.state}
+            </span>
+          </Tooltip>
+        );
+      })}
     </div>
   );
 };
@@ -277,7 +312,7 @@ const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
     width: 145,
     onHeaderCell: () => ({ className: 'header-col-students' }),
     onCell: () => ({ className: 'cell-col-students' }),
-    render: (students: SimulationLine['active_students_snapshot']) => renderStudentColumn(students, student => student.state)
+    render: renderStudentStates
   },
   {
     title: <span style={{ fontSize: '11px', color: '#1d4ed8' }}>Intentos</span>,
