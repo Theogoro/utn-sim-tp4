@@ -1,4 +1,4 @@
-from typing import Iterator, List, Optional
+from typing import Iterable, List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -76,7 +76,7 @@ class SimulationRepository:
             .all()
         )
 
-    def iter_lines(self, simulation_id: int) -> Iterator[SimulationLineModel]:
+    def iter_lines(self, simulation_id: int) -> Iterable[SimulationLineModel]:
         return (
             self.db.query(SimulationLineModel)
             .filter(SimulationLineModel.simulation_id == simulation_id)
@@ -107,7 +107,7 @@ class SimulationRepository:
             .all()
         )
 
-    def iter_students(self, simulation_id: int) -> Iterator[SimulationStudentModel]:
+    def iter_students(self, simulation_id: int) -> Iterable[SimulationStudentModel]:
         return (
             self.db.query(SimulationStudentModel)
             .filter(SimulationStudentModel.simulation_id == simulation_id)

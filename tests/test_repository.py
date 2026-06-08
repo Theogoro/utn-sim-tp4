@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -47,13 +49,16 @@ def test_get_missing_returns_none(repo):
 
 
 def test_list_orders_by_created_at_desc(repo):
-    repo.create(_make_model())
-    repo.create(_make_model())
+    older = _make_model()
+    older.created_at = datetime.datetime(2020, 1, 1, 0, 0, 0)
+    newer = _make_model()
+    newer.created_at = datetime.datetime(2020, 1, 2, 0, 0, 0)
+    repo.create(older)
+    repo.create(newer)
     repo.commit()
     sims = repo.list()
     assert len(sims) == 2
-    times = [s.created_at for s in sims]
-    assert times == sorted(times, reverse=True)
+    assert [s.created_at for s in sims] == [newer.created_at, older.created_at]
 
 
 def test_delete_removes(repo):
