@@ -127,11 +127,8 @@ class Simulation:
             self.state.finalize_student(student_id, "INSCRIPTO")
 
         # La prioridad del encargado se aplica al liberar la PC, sin interrumpir inscripciones.
-        if (
-            self.state.encargado.state == ENCARGADO_ESPERANDO_PC
-            and pc.id in self.state.encargado.pcs_pendientes_mantenimiento
-        ):
-            schedule_maintenance(self.state, pc_index)
+        if self.state.encargado.state == ENCARGADO_ESPERANDO_PC:
+            technician_take_pc_or_wait(self.state)
         elif self.state.queue_student_ids:
             dequeue_and_start_enrollment(self.state, pc_index)
 
