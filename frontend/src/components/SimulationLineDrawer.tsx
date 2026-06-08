@@ -1,7 +1,8 @@
-import { Descriptions, Drawer, Empty, Table, Tag, Tooltip, Typography } from 'antd';
+import { Descriptions, Drawer, Empty, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { SimulationLine } from '../types/simulation';
 import { describeEncargadoState, describeStudentState } from '../utils/stateLabels';
+import { StateBadge } from './StateBadge';
 
 const { Text, Title } = Typography;
 
@@ -68,11 +69,7 @@ const studentColumns: ColumnsType<SimulationLine['active_students_snapshot'][num
     title: 'Estado',
     dataIndex: 'state',
     key: 'state',
-    render: (state: string) => (
-      <Tooltip title={describeStudentState(state).description} mouseEnterDelay={0.05}>
-        <Tag color="blue" style={{ cursor: 'help' }}>{state}</Tag>
-      </Tooltip>
-    ),
+    render: (state: string) => <StateBadge meaning={describeStudentState(state)} />,
   },
   {
     title: 'Intentos',
@@ -121,9 +118,7 @@ export const SimulationLineDrawer = ({ line, open, onClose }: SimulationLineDraw
             <Title level={5} style={{ marginTop: 0 }}>Encargado</Title>
             <Descriptions bordered size="small" column={1}>
               <Descriptions.Item label="Estado">
-                <Tooltip title={describeEncargadoState(line.encargado_snapshot.state).description} mouseEnterDelay={0.05}>
-                  <Tag color="orange" style={{ cursor: 'help' }}>{line.encargado_snapshot.state}</Tag>
-                </Tooltip>
+                <StateBadge meaning={describeEncargadoState(line.encargado_snapshot.state)} />
               </Descriptions.Item>
               <Descriptions.Item label="PCs pendientes">
                 {pendingPcs.length > 0
