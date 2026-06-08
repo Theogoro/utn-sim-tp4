@@ -14,7 +14,7 @@ import type { SimulationLine } from '../types/simulation';
 
 const { Text } = Typography;
 
-const TABLE_SCROLL = { x: 2200, y: 500 };
+const TABLE_SCROLL = { x: 2800, y: 500 };
 const PAGE_SIZE_OPTIONS = ['10', '20', '50', '100', '500', '1000'];
 
 type EventStyle = [label: string, color: string, backgroundColor: string, borderColor: string];
@@ -112,28 +112,23 @@ const renderEncargado = (snapshot: SimulationLine['encargado_snapshot']): ReactN
   );
 };
 
-const renderActiveStudents = (students: SimulationLine['active_students_snapshot']): ReactNode => {
-  if (!students?.length) return <span style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: '11px' }}>-</span>;
-  // La celda muestra un resumen corto; el tooltip conserva el detalle por alumno activo.
-  const display = students.slice(0, 5).map(student => {
-    const wait = student.esperando_en_fila_desde !== null ? ` EF@${student.esperando_en_fila_desde.toFixed(2)}` : '';
-    const ret = student.minuto_vuelta !== null ? ` EV@${student.minuto_vuelta.toFixed(2)}` : '';
-    return `A${student.id}:${student.state} i${student.attempts} v${student.times_returned_later}${wait}${ret}`;
-  }).join(' · ');
-  const suffix = students.length > 5 ? ` +${students.length - 5}` : '';
-  const title = students.map(student => [
-    `Alumno ${student.id}`,
-    `Estado: ${student.state}`,
-    `Intentos: ${student.attempts}`,
-    `Veces que volvió: ${student.times_returned_later}`,
-    `Espera acumulada: ${(student.total_waiting_time / 60).toFixed(2)} min`,
-    student.minuto_vuelta !== null ? `Minuto de vuelta: ${student.minuto_vuelta.toFixed(2)}` : null,
-    student.esperando_en_fila_desde !== null ? `Esperando en fila desde: ${student.esperando_en_fila_desde.toFixed(2)}` : null,
-  ].filter(Boolean).join(' | ')).join('\n');
+const renderStudentColumn = (
+  students: SimulationLine['active_students_snapshot'],
+  getValue: (student: SimulationLine['active_students_snapshot'][number]) => string,
+  color = '#1d4ed8',
+): ReactNode => {
+  if (!students?.length) {
+    return <span style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: '11px' }}>-</span>;
+  }
+
   return (
-    <Tooltip title={title}>
-      <span style={{ color: '#1d4ed8', fontFamily: 'monospace', fontSize: '11px' }}>{display}{suffix}</span>
-    </Tooltip>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {students.map(student => (
+        <span key={student.id} style={{ color, fontFamily: 'monospace', fontSize: '11px', lineHeight: 1.35, whiteSpace: 'nowrap' }}>
+          {getValue(student)}
+        </span>
+      ))}
+    </div>
   );
 };
 
@@ -266,13 +261,75 @@ const createColumns = (queueLimit: number): ColumnsType<SimulationLine> => [
     render: renderEncargado
   },
   {
-    title: <span style={{ fontSize: '11px', color: '#1d4ed8' }}><TeamOutlined /> Detalle alumnos</span>,
+    title: <span style={{ fontSize: '11px', color: '#1d4ed8' }}><TeamOutlined /> Alumno</span>,
     dataIndex: 'active_students_snapshot',
-    key: 'active_students_snapshot',
-    width: 360,
+    key: 'student_ids',
+    width: 110,
     onHeaderCell: () => ({ className: 'header-col-students' }),
     onCell: () => ({ className: 'cell-col-students' }),
-    render: renderActiveStudents
+    render: (students: SimulationLine['active_students_snapshot']) => renderStudentColumn(students, student => `A${student.id}`)
+  },
+  {
+    title: <span style={{ fontSize: '11px', color: '#1d4ed8' }}>Estado alumno</span>,
+    dataIndex: 'active_students_snapshot',
+    key: 'student_states',
+    width: 145,
+    onHeaderCell: () => ({ className: 'header-col-students' }),
+    onCell: () => ({ className: 'cell-col-students' }),
+    render: (students: SimulationLine['active_students_snapshot']) => renderStudentColumn(students, student => student.state)
+  },
+  {
+    title: <span style={{ fontSize: '11px', color: '#1d4ed8' }}>Intentos</span>,
+    dataIndex: 'active_students_snapshot',
+    key: 'student_attempts',
+    width: 105,
+    onHeaderCell: () => ({ className: 'header-col-students' }),
+    onCell: () => ({ className: 'cell-col-students' }),
+    render: (students: SimulationLine['active_students_snapshot']) => renderStudentColumn(students, student => String(student.attempts), '#334155')
+  },
+  {
+    title: <span style={{ fontSize: '11px', color: '#1d4ed8' }}>Veces volvió</span>,
+    dataIndex: 'active_students_snapshot',
+    key: 'student_returns',
+    width: 120,
+    onHeaderCell: () => ({ className: 'header-col-students' }),
+    onCell: () => ({ className: 'cell-col-students' }),
+    render: (students: SimulationLine['active_students_snapshot']) => renderStudentColumn(students, student => String(student.times_returned_later), '#334155')
+  },
+  {
+    title: <span style={{ fontSize: '11px', color: '#1d4ed8' }}>Espera acum.</span>,
+    dataIndex: 'active_students_snapshot',
+    key: 'student_waiting_time',
+    width: 135,
+    onHeaderCell: () => ({ className: 'header-col-students' }),
+    onCell: () => ({ className: 'cell-col-students' }),
+    render: (students: SimulationLine['active_students_snapshot']) => renderStudentColumn(students, student => `${(student.total_waiting_time / 60).toFixed(2)} min`, '#334155')
+  },
+  {
+    title: <span style={{ fontSize: '11px', color: '#1d4ed8' }}>Min. vuelta</span>,
+    dataIndex: 'active_students_snapshot',
+    key: 'student_return_minute',
+    width: 125,
+    onHeaderCell: () => ({ className: 'header-col-students' }),
+    onCell: () => ({ className: 'cell-col-students' }),
+    render: (students: SimulationLine['active_students_snapshot']) => renderStudentColumn(
+      students,
+      student => student.minuto_vuelta !== null ? student.minuto_vuelta.toFixed(2) : '-',
+      '#334155',
+    )
+  },
+  {
+    title: <span style={{ fontSize: '11px', color: '#1d4ed8' }}>Fila desde</span>,
+    dataIndex: 'active_students_snapshot',
+    key: 'student_queue_since',
+    width: 125,
+    onHeaderCell: () => ({ className: 'header-col-students' }),
+    onCell: () => ({ className: 'cell-col-students' }),
+    render: (students: SimulationLine['active_students_snapshot']) => renderStudentColumn(
+      students,
+      student => student.esperando_en_fila_desde !== null ? student.esperando_en_fila_desde.toFixed(2) : '-',
+      '#334155',
+    )
   },
   {
     title: <span style={{ fontSize: '11px', color: '#1d4ed8' }}><ExperimentOutlined /> RND Lleg.</span>,
