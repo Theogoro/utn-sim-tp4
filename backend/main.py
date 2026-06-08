@@ -14,6 +14,7 @@ from backend.database import engine, Base, get_db
 from backend.models import SimulationModel, SimulationLineModel, SimulationStudentModel
 from backend.schemas import SimulationParamsCreate, SimulationResponse, SimulationLineResponse, SimulationStudentResponse
 from backend.db_logger import DatabaseLoggerHandler
+from backend.repositories.simulation_repository import SimulationRepository
 
 from simulation.params import SimulationParams
 from simulation.simulation import Simulation
@@ -87,7 +88,7 @@ def run_simulation(params_in: SimulationParamsCreate, db: Session = Depends(get_
 
         # 3. Correr simulación con logger que streamea líneas y alumnos finalizados a la session.
         sim = Simulation(sim_params)
-        logger = DatabaseLoggerHandler(sim.state, db, sim_model.id)
+        logger = DatabaseLoggerHandler(sim.state, SimulationRepository(db), sim_model.id)
         sim.observers = [logger]
         final_state = sim.run(max_simulation_time)
         # Al cortar por horizonte pueden quedar alumnos activos; se guardan como estado final parcial.

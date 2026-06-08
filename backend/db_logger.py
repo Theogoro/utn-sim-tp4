@@ -1,19 +1,18 @@
 import json
 
 from simulation.handlers.loggers import build_row
-from backend.models import SimulationLineModel, SimulationStudentModel
 
 
 class DatabaseLoggerHandler:
-    """Stream cada fila al session de DB. Sin acumular en memoria.
+    """Stream each row to the DB via the repository. No in-memory accumulation.
 
-    El llamador hace commit/rollback al final. Cada `flush_every` eventos
-    se hace flush para liberar instancias ORM acumuladas en la session.
+    The caller commits/rolls back at the end. Every `flush_every` events we flush
+    to release accumulated ORM instances from the session.
     """
 
-    def __init__(self, state, db, simulation_id: int, flush_every: int = 500):
+    def __init__(self, state, repo, simulation_id: int, flush_every: int = 500):
         self.state = state
-        self.db = db
+        self.repo = repo
         self.simulation_id = simulation_id
         self.flush_every = flush_every
         self.line_counter = 0
@@ -21,7 +20,7 @@ class DatabaseLoggerHandler:
 
     def trigger(self, event=None) -> None:
         row = build_row(self.state)
-        # La DB guarda snapshots JSON para que el vector no dependa de columnas fijas.
+        # The DB stores JSON snapshots so the vector does not depend on fixed columns.
         line_payload = {
             "clock": row["clock"],
             "clock_formatted": row["clock_formatted"],
@@ -46,19 +45,19 @@ class DatabaseLoggerHandler:
             "registrations_completed": row["registrations_completed"],
             "total_students_returned": row["total_students_returned"],
         }
-        self.db.add(SimulationLineModel(
+        self.repo.add_line(
             simulation_id=self.simulation_id,
             line_index=self.line_counter,
             **line_payload,
-        ))
-        # Los alumnos finalizados se persisten apenas salen de memoria activa.
+        )
+        # Finalized students are persisted as soon as they leave active memory.
         self.flush_student_records()
         self.line_counter += 1
         if self.flush_every and self.line_counter % self.flush_every == 0:
-            self.db.flush()
+            self.repo.flush()
 
     def flush_student_records(self, include_active: bool = False) -> None:
-        """Persiste alumnos destruidos del motor; opcionalmente cierra los activos al final."""
+        """Persist destroyed students; optionally close out active ones at the end."""
         records = list(self.state.finalized_student_records)
         self.state.finalized_student_records.clear()
         if include_active:
@@ -68,8 +67,8 @@ class DatabaseLoggerHandler:
             student_id = record["student_id"]
             if student_id in self.persisted_student_ids:
                 continue
-            self.db.add(SimulationStudentModel(
+            self.repo.add_student(
                 simulation_id=self.simulation_id,
                 **record,
-            ))
+            )
             self.persisted_student_ids.add(student_id)
