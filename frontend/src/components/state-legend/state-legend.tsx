@@ -1,4 +1,5 @@
-import { Card, Table, Tag } from 'antd';
+import { Collapse, Table, Tag } from 'antd';
+import { TableOutlined } from '@ant-design/icons';
 import { StateBadge } from '../state-badge/StateBadge';
 import {
   describePcState,
@@ -74,21 +75,31 @@ const columns = [
 
 /** Leyenda de referencia con todos los estados posibles de la simulación. */
 const StateLegend = () => (
-  <Card
+  <Collapse
     className="glass-panel"
-    size="small"
-    title="Estados"
-    style={{ marginBottom: 16 }}
-  >
-    <Table<LegendRow>
-      dataSource={rows}
-      columns={columns}
-      rowKey="key"
-      size="small"
-      pagination={false}
-      bordered
-    />
-  </Card>
+    defaultActiveKey={['estados']}
+    items={[
+      {
+        key: 'estados',
+        label: (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 600 }}>
+            <TableOutlined style={{ color: 'var(--accent-strong)' }} />
+            Estados
+          </span>
+        ),
+        children: (
+          <Table<LegendRow>
+            dataSource={rows}
+            columns={columns}
+            rowKey="key"
+            size="small"
+            pagination={false}
+            bordered
+          />
+        ),
+      },
+    ]}
+  />
 );
 
 export default StateLegend;

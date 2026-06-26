@@ -6,6 +6,7 @@ import SimulationHistory from './components/simulation-history/simulation-histor
 import SimulationForm from './components/simulation-form/simulation-form';
 import SimulationDetails from './components/simulation-details/simulation-details';
 import StateLegend from './components/state-legend/state-legend';
+import Enunciado from './components/enunciado/enunciado';
 
 const { Header, Content, Footer } = Layout;
 
@@ -102,6 +103,8 @@ const App = () => {
 				</section>
 
 				<div className="simulation-layout">
+
+				<Enunciado />
 
 				<SimulationForm
 					onSubmit={runSimulation}
