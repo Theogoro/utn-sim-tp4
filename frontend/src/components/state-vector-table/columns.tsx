@@ -239,15 +239,15 @@ const createColumns = (queueLimit: number, numPcs: number): ColumnsType<Simulati
 		onHeaderCell: () => ({ className: 'header-col-general' }),
 		children: [
 			{
-				title: <span style={{ fontSize: '11px', color: '#334155' }}>Llegadas Tot.</span>,
+				title: <span style={{ fontSize: '11px', color: '#334155' }}>Llegadas Totales</span>,
 				dataIndex: 'total_students_arrived',
 				key: 'total_students_arrived',
-				width: 110,
+				width: 120,
 				onHeaderCell: () => ({ className: 'header-col-general' }),
 				render: (val: number) => renderMutedMonospace(val, false, 0)
 			},
 			{
-				title: <span style={{ fontSize: '11px', color: '#334155' }}>Llegadas Nuevas</span>,
+				title: <span style={{ fontSize: '11px', color: '#334155' }}>Alumnos Nuevos</span>,
 				dataIndex: 'total_new_students_arrived',
 				key: 'total_new_students_arrived',
 				width: 120,
