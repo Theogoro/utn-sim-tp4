@@ -84,8 +84,8 @@ def admit_or_defer_student(state, student, schedule_return_when_full: bool = Tru
         if schedule_return_when_full:
             schedule_student_return(state, student)
         else:
-            state.stats.total_students_returned += 1
-            student.times_returned_later += 1
+            # Rechazo definitivo: ya se contó como "se va para regresar" en la primera
+            # salida; aquí no vuelve a esperar, solo se historiza como RECHAZADO.
             state.finalize_student(student.id, "RECHAZADO")
     else:
         enqueue_student(state, student)

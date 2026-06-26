@@ -67,9 +67,11 @@ class SimulationService:
 
             stats = final_state.stats
 
+            # Compute derived statistics
+
             pct_students_returned = 0.0
-            if stats.total_students_arrived > 0:
-                pct_students_returned = (stats.total_students_returned / stats.total_students_arrived) * 100
+            if stats.total_new_students_arrived > 0:
+                pct_students_returned = (stats.total_students_returned / stats.total_new_students_arrived) * 100
 
             avg_waiting_time = 0.0
             if stats.students_queued_and_waited > 0:

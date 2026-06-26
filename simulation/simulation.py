@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from simulation.params import SimulationParams
 from simulation.state import (
+    ENCARGADO_ESPERANDO_MANTENIMIENTO,
     ENCARGADO_ESPERANDO_PC,
     EVENT_FIN_INSCRIPCION,
     EVENT_FIN_MANTENIMIENTO,
@@ -63,8 +64,14 @@ class Simulation:
         for pc in self.state.pcs:
             pc.advance_clock(max_time)
 
-        if self.state.encargado.state == ENCARGADO_ESPERANDO_PC and self.state.encargado.esperando_desde is not None:
-            self.state.technician_visit_idle_accumulated += max_time - self.state.encargado.esperando_desde
+        # Si una visita de mantenimiento sigue abierta al cortar el horizonte, sumamos el
+        # ocio del encargado (incluido el tramo final si quedó esperando) y contamos esa
+        # visita parcial; de lo contrario ese ocio se perdería del promedio por visita.
+        if self.state.encargado.state != ENCARGADO_ESPERANDO_MANTENIMIENTO:
+            if self.state.encargado.state == ENCARGADO_ESPERANDO_PC and self.state.encargado.esperando_desde is not None:
+                self.state.technician_visit_idle_accumulated += max_time - self.state.encargado.esperando_desde
+            self.state.stats.total_technician_visits += 1
+            self.state.stats.total_technician_idle_time += self.state.technician_visit_idle_accumulated
 
         self.state.current_time = max_time
         return self.state
@@ -129,6 +136,9 @@ class Simulation:
         # La prioridad del encargado se aplica al liberar la PC, sin interrumpir inscripciones.
         if self.state.encargado.state == ENCARGADO_ESPERANDO_PC:
             technician_take_pc_or_wait(self.state)
+            # Si el encargado no pudo tomar esta PC (no estaba pendiente), la cola la usa.
+            if pc.state == PC_LIBRE and self.state.queue_student_ids:
+                dequeue_and_start_enrollment(self.state, pc_index)
         elif self.state.queue_student_ids:
             dequeue_and_start_enrollment(self.state, pc_index)
 
