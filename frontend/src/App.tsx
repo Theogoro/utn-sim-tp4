@@ -5,6 +5,7 @@ import { useSimulationHistory } from './hooks/useSimulationHistory';
 import SimulationHistory from './components/simulation-history/simulation-history';
 import SimulationForm from './components/simulation-form/simulation-form';
 import SimulationDetails from './components/simulation-details/simulation-details';
+import StateLegend from './components/state-legend/state-legend';
 
 const { Header, Content, Footer } = Layout;
 
@@ -106,6 +107,8 @@ const App = () => {
 					onSubmit={runSimulation}
 					loading={loadingSubmit}
 				/>
+
+				<StateLegend />
 
 				<SimulationHistory
 					simulations={simulations}
