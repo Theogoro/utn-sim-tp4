@@ -1,0 +1,151 @@
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.fullscreenWrapper {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #ffffff;
+  padding: 16px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.monospace {
+  font-family: monospace, var(--font-family);
+}
+
+.muted {
+  color: #94a3b8;
+}
+
+.mutedSmall {
+  color: #cbd5e1;
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.value {
+  color: #334155;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.rndValue {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.eventTag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 11px;
+  font-family: monospace;
+}
+
+.queueBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 11px;
+  font-family: monospace;
+}
+
+.pcContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+
+.pcBadge {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 5px;
+  padding: 2px 5px;
+  gap: 4px;
+  height: 18px;
+}
+
+.pcIndex {
+  font-size: 9px;
+  color: #64748b;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+.pcLed {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.traceRow {
+  cursor: pointer;
+}
+
+.activeRow {
+  background-color: #eff6ff !important;
+}
+
+.headerGeneral {}
+
+.headerStudents {}
+
+.headerMaintenance {}
+
+.headerComputers {}
+
+.cellStudents {}
+
+.cellMaintenance {}
+
+.cellComputers {}
+
+.strongBlue {
+  color: #1d4ed8;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.successValue {
+  color: #15803d;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.errorValue {
+  color: #b91c1c;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.neutralValue {
+  color: #64748b;
+  font-size: 11px;
+  font-family: monospace;
+}
+
+.pendingPc {
+  color: #92400e;
+  font-weight: 700;
+  font-family: monospace;
+  font-size: 11px;
+}

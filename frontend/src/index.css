@@ -566,3 +566,23 @@ body { background: var(--bg-gradient); background-attachment: fixed; }
 }
 
 code, .mono { font-family: var(--font-mono); }
+
+.simulation-layout{
+  display:flex;
+  flex-direction:column;
+  gap:24px;
+  margin-bottom:24px;
+}
+
+.glass-panel{
+  background: var(--panel-bg) !important;
+  border:1px solid var(--panel-border) !important;
+  border-radius:10px !important;
+  box-shadow: var(--panel-shadow);
+
+  overflow:hidden;
+}
+
+.ant-card-body{
+  padding:24px !important;
+}

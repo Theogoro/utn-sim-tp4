@@ -1,0 +1,39 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.simulation-line-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.drawer-section-title {
+  margin-top: 0 !important;
+  margin-bottom: 14px !important;
+}
+
+.drawer-tag {
+  margin: 2px;
+}
+
+.drawer-mono {
+  font-family:
+    'JetBrains Mono',
+    monospace;
+}
+
+.drawer-text-strong {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.drawer-description-value {
+  color: #334155;
+}
+
+.drawer-empty {
+  color: #64748b;
+}

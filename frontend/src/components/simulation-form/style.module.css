@@ -1,0 +1,115 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.subtitle {
+  color: #64748b;
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.subsection {
+  background: #fff;
+  border: 1px solid #e5eaf0;
+  border-radius: 14px;
+  padding: 18px;
+  height: 100%;
+}
+
+.subsectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+.subsectionTitleDanger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #b91c1c;
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
+
+.subsectionTitleMaintenance {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #92400e;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+.subsectionTitleTime {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0369a1;
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
+
+.labelWithTip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.infoIcon {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.helperText {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.inputAddon {
+  padding: 0 11px;
+  border: 1px solid #d9d9d9;
+  border-left: none;
+  display: flex;
+  align-items: center;
+  background: #fafafa;
+  border-radius: 0 6px 6px 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.submitContainer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+
+.submitButton {
+  height: 44px;
+  padding: 0 28px;
+  font-size: 14px;
+  font-weight: 600;
+}

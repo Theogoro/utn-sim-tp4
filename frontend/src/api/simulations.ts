@@ -1,11 +1,9 @@
 import axios from 'axios';
-import type {
-  PaginatedSimulationLines,
-  PaginatedSimulationStudents,
-  PcUtilization,
-  SimulationParams,
-  SimulationSummary,
-} from '../types/simulation';
+import type { PaginatedSimulationLines } from '../types/paginated-simulation-lines';
+import type { PaginatedSimulationStudents } from '../types/paginated-simulation-student';
+import type { PcUtilization } from '../types/pc-utilization';
+import type { SimulationParams } from '../types/simulation-params';
+import type { SimulationSummary } from '../types/simulation-summary';
 
 const API_URL = 'http://127.0.0.1:8000/api';
 

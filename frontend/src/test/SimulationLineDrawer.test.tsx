@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { SimulationLineDrawer } from './SimulationLineDrawer';
-import type { SimulationLine } from '../types/simulation';
+import { SimulationLine } from '../types/simulation-line';
+import { SimulationLineDrawer } from '../components/simulation-line-drawer/simulation-line-drawer';
 
 const line: SimulationLine = {
   id: 1001,
@@ -14,9 +14,9 @@ const line: SimulationLine = {
   queue_length: 4,
   pc_states: 'L,I,M',
   pc_snapshot: [
-    { id: 1, state: 'L' },
-    { id: 2, state: 'I' },
-    { id: 3, state: 'M' },
+    { id: 1, state: 'L', fin_inscripcion: null },
+    { id: 2, state: 'I', fin_inscripcion: 4000 },
+    { id: 3, state: 'M', fin_inscripcion: null },
   ],
   encargado_snapshot: {
     state: 'revisando',

@@ -1,8 +1,8 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import StateVectorTable from './StateVectorTable';
-import type { SimulationLine } from '../types/simulation';
+import { SimulationLine } from '../types/simulation-line';
+import StateVectorTable from '../components/state-vector-table/state-vector-table';
 
 const makeLine = (overrides: Partial<SimulationLine> = {}): SimulationLine => ({
   id: 1,
@@ -14,9 +14,9 @@ const makeLine = (overrides: Partial<SimulationLine> = {}): SimulationLine => ({
   queue_length: 0,
   pc_states: 'L,I,M',
   pc_snapshot: [
-    { id: 1, state: 'L' },
-    { id: 2, state: 'I' },
-    { id: 3, state: 'M' },
+    { id: 1, state: 'L', fin_inscripcion: null },
+    { id: 2, state: 'I', fin_inscripcion: 4000 },
+    { id: 3, state: 'M', fin_inscripcion: null },
   ],
   encargado_snapshot: {
     state: 'esperando',

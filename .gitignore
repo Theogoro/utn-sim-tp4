@@ -4,3 +4,4 @@ node_modules
 .sim-baseline.txt
 .sim-after.txt
 .*.log
+.idea

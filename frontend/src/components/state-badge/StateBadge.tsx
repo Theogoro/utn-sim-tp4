@@ -1,5 +1,5 @@
 import { Tooltip } from 'antd';
-import type { StateMeaning } from '../utils/stateLabels';
+import type { StateMeaning } from '../../utils/stateLabels';
 
 interface StateBadgeProps {
   meaning: StateMeaning;
