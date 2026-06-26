@@ -1,7 +1,7 @@
 import { LaptopOutlined} from '@ant-design/icons';
 import styles from '../style.module.css';
 import { labelWithTip } from '../label-with-tip';
-import { Form, Slider, InputNumber, Space } from 'antd';
+import { Form, Slider, InputNumber } from 'antd';
 
 const InfrastructureSection = () => {
     return (
@@ -61,30 +61,13 @@ const InfrastructureSection = () => {
             },
             ]}
         >
-            <Space.Compact className={styles.fullWidth}>
-                <InputNumber
-                    min={0.1}
-                    max={60}
-                    step={0.1}
-                    style={{ width: '100%' }}
-                />
-
-                <div
-                    style={{
-                    padding: '0 11px',
-                    border: '1px solid #d9d9d9',
-                    borderLeft: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    background: '#fafafa',
-                    borderRadius: '0 6px 6px 0',
-                    color: '#64748b',
-                    fontSize: '14px'
-                    }}
-                >
-                    min
-                </div>
-                </Space.Compact>
+            <InputNumber
+                min={0.1}
+                max={60}
+                step={0.1}
+                addonAfter="min"
+                className={styles.fullWidth}
+            />
         </Form.Item>
 
         <div

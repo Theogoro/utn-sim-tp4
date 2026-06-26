@@ -1,4 +1,4 @@
-import {Form,InputNumber,Row,Col,Space} from 'antd';
+import {Form,InputNumber,Row,Col} from 'antd';
 import {ToolOutlined,ClockCircleOutlined} from '@ant-design/icons';
 import styles from '../style.module.css';
 
@@ -26,18 +26,13 @@ const MaintenanceSection = () => {
               },
             ]}
           >
-            <Space.Compact className={styles.fullWidth}>
-              <InputNumber
-                min={0.5}
-                max={120}
-                step={0.1}
-                style={{ width: '100%' }}
-              />
-
-              <div className={styles.inputAddon}>
-                min
-              </div>
-            </Space.Compact>
+            <InputNumber
+              min={0.5}
+              max={120}
+              step={0.1}
+              addonAfter="min"
+              className={styles.fullWidth}
+            />
           </Form.Item>
         </Col>
 
@@ -68,18 +63,13 @@ const MaintenanceSection = () => {
               }),
             ]}
           >
-            <Space.Compact className={styles.fullWidth}>
-              <InputNumber
-                min={0.5}
-                max={120}
-                step={0.1}
-                style={{ width: '100%' }}
-              />
-
-              <div className={styles.inputAddon}>
-                min
-              </div>
-            </Space.Compact>
+            <InputNumber
+              min={0.5}
+              max={120}
+              step={0.1}
+              addonAfter="min"
+              className={styles.fullWidth}
+            />
           </Form.Item>
         </Col>
       </Row>
@@ -95,18 +85,13 @@ const MaintenanceSection = () => {
               },
             ]}
           >
-            <Space.Compact className={styles.fullWidth}>
-              <InputNumber
-                min={1}
-                max={1440}
-                step={1}
-                style={{ width: '100%' }}
-              />
-
-              <div className={styles.inputAddon}>
-                min
-              </div>
-            </Space.Compact>
+            <InputNumber
+              min={1}
+              max={1440}
+              step={1}
+              addonAfter="min"
+              className={styles.fullWidth}
+            />
           </Form.Item>
         </Col>
 
@@ -120,18 +105,13 @@ const MaintenanceSection = () => {
               },
             ]}
           >
-            <Space.Compact className={styles.fullWidth}>
-              <InputNumber
-                min={0}
-                max={120}
-                step={1}
-                style={{ width: '100%' }}
-              />
-
-              <div className={styles.inputAddon}>
-                min
-              </div>
-            </Space.Compact>
+            <InputNumber
+              min={0}
+              max={120}
+              step={1}
+              addonAfter="min"
+              className={styles.fullWidth}
+            />
           </Form.Item>
         </Col>
       </Row>
@@ -154,18 +134,13 @@ const MaintenanceSection = () => {
           },
         ]}
       >
-        <Space.Compact className={styles.fullWidth}>
-          <InputNumber
-            min={0.1}
-            max={720}
-            placeholder="Duración en horas"
-            style={{ width: '100%' }}
-          />
-
-          <div className={styles.inputAddon}>
-            horas
-          </div>
-        </Space.Compact>
+        <InputNumber
+          min={0.1}
+          max={720}
+          placeholder="Duración en horas"
+          addonAfter="horas"
+          className={styles.fullWidth}
+        />
       </Form.Item>
     </div>
   );

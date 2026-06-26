@@ -1,4 +1,4 @@
-import {Form,InputNumber,Row,Col,Switch,Space,} from 'antd';
+import {Form,InputNumber,Row,Col,Switch,} from 'antd';
 import {HourglassOutlined,WarningOutlined,} from '@ant-design/icons';
 import styles from '../style.module.css';
 import { labelWithTip } from '../label-with-tip';
@@ -27,18 +27,13 @@ const EnrollmentSection = () => {
               },
             ]}
           >
-            <Space.Compact className={styles.fullWidth}>
-              <InputNumber
-                min={0.5}
-                max={120}
-                step={0.1}
-                style={{ width: '100%' }}
-              />
-
-              <div className={styles.inputAddon}>
-                min
-              </div>
-            </Space.Compact>
+            <InputNumber
+              min={0.5}
+              max={120}
+              step={0.1}
+              addonAfter="min"
+              className={styles.fullWidth}
+            />
           </Form.Item>
         </Col>
 
@@ -67,18 +62,13 @@ const EnrollmentSection = () => {
               }),
             ]}
           >
-            <Space.Compact className={styles.fullWidth}>
-              <InputNumber
-                min={0.5}
-                max={120}
-                step={0.1}
-                style={{ width: '100%' }}
-              />
-
-              <div className={styles.inputAddon}>
-                min
-              </div>
-            </Space.Compact>
+            <InputNumber
+              min={0.5}
+              max={120}
+              step={0.1}
+              addonAfter="min"
+              className={styles.fullWidth}
+            />
           </Form.Item>
         </Col>
       </Row>
@@ -136,18 +126,13 @@ const EnrollmentSection = () => {
               },
             ]}
           >
-            <Space.Compact className={styles.fullWidth}>
-              <InputNumber
-                min={1}
-                max={720}
-                step={1}
-                style={{ width: '100%' }}
-              />
-
-              <div className={styles.inputAddon}>
-                min
-              </div>
-            </Space.Compact>
+            <InputNumber
+              min={1}
+              max={720}
+              step={1}
+              addonAfter="min"
+              className={styles.fullWidth}
+            />
           </Form.Item>
         </Col>
       </Row>
