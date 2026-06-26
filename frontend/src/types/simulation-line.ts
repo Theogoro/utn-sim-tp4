@@ -39,4 +39,10 @@ export interface SimulationLine {
     next_maintenance_complete_time: number | null;
     registrations_completed: number;
     total_students_returned: number;
+    total_students_arrived: number;
+    total_new_students_arrived: number;
+    students_queued_and_waited: number;
+    total_technician_visits: number;
+    total_waiting_time: number;
+    total_technician_idle_time: number;
 }

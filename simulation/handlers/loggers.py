@@ -41,6 +41,12 @@ def build_row(state) -> dict:
         "next_maintenance_complete_time": state.next_maintenance_complete,
         "registrations_completed": state.stats.registrations_completed,
         "total_students_returned": state.stats.total_students_returned,
+        "total_students_arrived": state.stats.total_students_arrived,
+        "total_new_students_arrived": state.stats.total_new_students_arrived,
+        "students_queued_and_waited": state.stats.students_queued_and_waited,
+        "total_technician_visits": state.stats.total_technician_visits,
+        "total_waiting_time": state.stats.total_waiting_time,
+        "total_technician_idle_time": state.stats.total_technician_idle_time,
     }
 
 

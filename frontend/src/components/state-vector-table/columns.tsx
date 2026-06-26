@@ -219,8 +219,76 @@ const createColumns = (queueLimit: number, numPcs: number): ColumnsType<Simulati
 		width: 145,
 		onHeaderCell: () => ({ className: 'header-col-maintenance' }),
 		onCell: () => ({ className: 'cell-col-maintenance' }),
-		render: (val: number | null) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') : 
+		render: (val: number | null) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') :
 			renderMutedMonospace(null)
+	},
+	{
+		title: <span style={{ fontSize: '11px', color: '#92400e' }}>Fin Mantenimiento</span>,
+		dataIndex: 'next_maintenance_complete_time',
+		key: 'next_maintenance_complete_time',
+		width: 130,
+		onHeaderCell: () => ({ className: 'header-col-maintenance' }),
+		onCell: () => ({ className: 'cell-col-maintenance' }),
+		render: (val: number | null) => val !== null ? <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#92400e' }}>
+			{formatClockSeconds(val)}
+		</span> : renderMutedMonospace(null)
+	},
+	{
+		title: <span style={{ fontSize: '11px', color: '#334155' }}><ExperimentOutlined /> Contadores / Acumuladores</span>,
+		key: 'counters_group',
+		onHeaderCell: () => ({ className: 'header-col-general' }),
+		children: [
+			{
+				title: <span style={{ fontSize: '11px', color: '#334155' }}>Llegadas Tot.</span>,
+				dataIndex: 'total_students_arrived',
+				key: 'total_students_arrived',
+				width: 110,
+				onHeaderCell: () => ({ className: 'header-col-general' }),
+				render: (val: number) => renderMutedMonospace(val, false, 0)
+			},
+			{
+				title: <span style={{ fontSize: '11px', color: '#334155' }}>Llegadas Nuevas</span>,
+				dataIndex: 'total_new_students_arrived',
+				key: 'total_new_students_arrived',
+				width: 120,
+				onHeaderCell: () => ({ className: 'header-col-general' }),
+				render: (val: number) => renderMutedMonospace(val, false, 0)
+			},
+			{
+				title: <span style={{ fontSize: '11px', color: '#334155' }}>Alumnos en Cola</span>,
+				dataIndex: 'students_queued_and_waited',
+				key: 'students_queued_and_waited',
+				width: 120,
+				onHeaderCell: () => ({ className: 'header-col-general' }),
+				render: (val: number) => renderMutedMonospace(val, false, 0)
+			},
+			{
+				title: <span style={{ fontSize: '11px', color: '#334155' }}>Visitas Téc.</span>,
+				dataIndex: 'total_technician_visits',
+				key: 'total_technician_visits',
+				width: 105,
+				onHeaderCell: () => ({ className: 'header-col-general' }),
+				render: (val: number) => renderMutedMonospace(val, false, 0)
+			},
+			{
+				title: <span style={{ fontSize: '11px', color: '#334155' }}>Tpo Espera Acum. (min)</span>,
+				dataIndex: 'total_waiting_time',
+				key: 'total_waiting_time',
+				width: 150,
+				onHeaderCell: () => ({ className: 'header-col-general' }),
+				render: (val: number | null) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') :
+					renderMutedMonospace(null)
+			},
+			{
+				title: <span style={{ fontSize: '11px', color: '#334155' }}>Ocio Téc. Acum. (min)</span>,
+				dataIndex: 'total_technician_idle_time',
+				key: 'total_technician_idle_time',
+				width: 150,
+				onHeaderCell: () => ({ className: 'header-col-general' }),
+				render: (val: number | null) => val !== null ? renderMutedMonospace(val / 60, false, 2, ' min') :
+					renderMutedMonospace(null)
+			},
+		],
 	}
 ];
 

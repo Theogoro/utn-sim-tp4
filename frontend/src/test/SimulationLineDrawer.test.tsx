@@ -51,6 +51,12 @@ const line: SimulationLine = {
   next_maintenance_complete_time: 4200,
   registrations_completed: 12,
   total_students_returned: 3,
+  total_students_arrived: 20,
+  total_new_students_arrived: 17,
+  students_queued_and_waited: 5,
+  total_technician_visits: 2,
+  total_waiting_time: 660,
+  total_technician_idle_time: 120,
 };
 
 describe('SimulationLineDrawer', () => {

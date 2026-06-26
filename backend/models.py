@@ -88,6 +88,12 @@ class SimulationLineModel(Base):
     # Accumulators on the current row
     registrations_completed = Column(Integer, default=0)
     total_students_returned = Column(Integer, default=0)
+    total_students_arrived = Column(Integer, default=0)
+    total_new_students_arrived = Column(Integer, default=0)
+    students_queued_and_waited = Column(Integer, default=0)
+    total_technician_visits = Column(Integer, default=0)
+    total_waiting_time = Column(Float, default=0.0)
+    total_technician_idle_time = Column(Float, default=0.0)
 
     # Back relation
     simulation = relationship("SimulationModel", back_populates="lines")

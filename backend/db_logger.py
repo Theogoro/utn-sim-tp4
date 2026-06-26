@@ -44,6 +44,12 @@ class DatabaseLoggerHandler:
             "next_maintenance_complete_time": row["next_maintenance_complete_time"],
             "registrations_completed": row["registrations_completed"],
             "total_students_returned": row["total_students_returned"],
+            "total_students_arrived": row["total_students_arrived"],
+            "total_new_students_arrived": row["total_new_students_arrived"],
+            "students_queued_and_waited": row["students_queued_and_waited"],
+            "total_technician_visits": row["total_technician_visits"],
+            "total_waiting_time": row["total_waiting_time"],
+            "total_technician_idle_time": row["total_technician_idle_time"],
         }
         self.repo.add_line(
             simulation_id=self.simulation_id,

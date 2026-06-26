@@ -62,6 +62,12 @@ class SimulationLineResponse(BaseModel):
     
     registrations_completed: int
     total_students_returned: int
+    total_students_arrived: int = 0
+    total_new_students_arrived: int = 0
+    students_queued_and_waited: int = 0
+    total_technician_visits: int = 0
+    total_waiting_time: float = 0.0
+    total_technician_idle_time: float = 0.0
 
     class Config:
         from_attributes = True

@@ -38,6 +38,12 @@ const makeLine = (overrides: Partial<SimulationLine> = {}): SimulationLine => ({
   next_maintenance_complete_time: null,
   registrations_completed: 0,
   total_students_returned: 0,
+  total_students_arrived: 0,
+  total_new_students_arrived: 0,
+  students_queued_and_waited: 0,
+  total_technician_visits: 0,
+  total_waiting_time: 0,
+  total_technician_idle_time: 0,
   ...overrides,
 });
 
