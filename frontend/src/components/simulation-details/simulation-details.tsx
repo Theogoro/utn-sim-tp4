@@ -157,7 +157,7 @@ const SimulationDetails = ({
             {simulation.id}
             </div>
 
-            <Button
+            {/* <Button
             icon={<FileExcelOutlined />}
             onClick={handleExport}
             loading={exporting}
@@ -166,7 +166,7 @@ const SimulationDetails = ({
             }
             >
             Descargar Excel
-            </Button>
+            </Button> */}
         </div>
 
         <Tabs

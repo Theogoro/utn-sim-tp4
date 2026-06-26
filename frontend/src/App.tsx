@@ -83,7 +83,7 @@ const App = () => {
 				<section className="page-hero">
 				<div>
 					<div className="hero-eyebrow">
-					TP Integrador · Sistemas de Simulación · 2026
+					TP Integrador · Grupo N° 1 · Sistemas de Simulación · 2026
 					</div>
 
 					<h1>
